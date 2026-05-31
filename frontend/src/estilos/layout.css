@@ -1,0 +1,61 @@
+.barra-superior {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 1000;
+
+  height: 80px;
+
+  padding: 0 25px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  background: rgba(10, 10, 10, 0.85);
+
+  backdrop-filter: blur(12px);
+
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.barra-superior h1 {
+  color: white;
+
+  font-size: 28px;
+
+  font-weight: 800;
+
+  margin: 0;
+}
+
+.barra-superior button {
+  height: 46px;
+
+  padding: 0 22px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.barra-superior button:hover {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}

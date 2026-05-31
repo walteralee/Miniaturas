@@ -1,0 +1,213 @@
+.modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.75);
+
+  backdrop-filter: blur(8px);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 5000;
+}
+
+/* ====================================================== */
+/* MODAL */
+/* ====================================================== */
+
+.update-modal {
+  width: 420px;
+
+  background: #111111;
+
+  border: 1px solid #1f1f1f;
+
+  border-radius: 20px;
+
+  padding: 28px;
+
+  position: relative;
+
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+}
+
+.update-modal h2 {
+  color: white;
+
+  font-size: 30px;
+
+  margin-bottom: 25px;
+
+  font-weight: 800;
+}
+
+/* ====================================================== */
+/* FORM */
+/* ====================================================== */
+
+.update-modal form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+/* ====================================================== */
+/* URL INPUT */
+/* ====================================================== */
+
+.update-modal input[type="text"] {
+  width: 100%;
+
+  height: 56px;
+
+  background: #1a1a1a;
+
+  border: 1px solid #2a2a2a;
+
+  border-radius: 14px;
+
+  padding: 0 18px;
+
+  color: white;
+
+  font-size: 15px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.update-modal input[type="text"]:focus {
+  border-color: #2563eb;
+
+  background: #1e1e1e;
+}
+
+/* ====================================================== */
+/* CUSTOM FILE BUTTON */
+/* ====================================================== */
+
+.file-label {
+  width: 100%;
+
+  height: 56px;
+
+  background: #1a1a1a;
+
+  border: 1px solid #2a2a2a;
+
+  border-radius: 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  font-size: 15px;
+
+  font-weight: 600;
+}
+
+.file-label:hover {
+  border-color: #2563eb;
+
+  background: #202020;
+}
+
+/* ====================================================== */
+/* FILE NAME */
+/* ====================================================== */
+
+.file-name {
+  color: #8a8a8a;
+
+  font-size: 14px;
+
+  margin-top: -5px;
+
+  padding-left: 5px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+/* ====================================================== */
+/* SUBMIT BUTTON */
+/* ====================================================== */
+
+.update-modal button[type="submit"] {
+  height: 56px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.update-modal button[type="submit"]:hover {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}
+
+/* ====================================================== */
+/* CLOSE BUTTON */
+/* ====================================================== */
+
+.close-btn {
+  position: absolute;
+
+  top: 18px;
+
+  right: 18px;
+
+  width: 40px;
+
+  height: 40px;
+
+  border-radius: 12px;
+
+  border: none;
+
+  background: #1f1f1f;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 18px;
+
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  background: #2a2a2a;
+}
