@@ -9,10 +9,18 @@ export async function get(url) {
 }
 
 export async function post(url, body) {
-  const respuesta = await fetch(url, {
+  const configuracion = {
     method: "POST",
     body,
-  });
+  };
+
+  if (!(body instanceof FormData)) {
+    configuracion.headers = {
+      "Content-Type": "application/json",
+    };
+  }
+
+  const respuesta = await fetch(url, configuracion);
 
   if (!respuesta.ok) {
     throw new Error(`Error HTTP ${respuesta.status}`);
@@ -22,10 +30,18 @@ export async function post(url, body) {
 }
 
 export async function put(url, body) {
-  const respuesta = await fetch(url, {
+  const configuracion = {
     method: "PUT",
     body,
-  });
+  };
+
+  if (!(body instanceof FormData)) {
+    configuracion.headers = {
+      "Content-Type": "application/json",
+    };
+  }
+
+  const respuesta = await fetch(url, configuracion);
 
   if (!respuesta.ok) {
     throw new Error(`Error HTTP ${respuesta.status}`);

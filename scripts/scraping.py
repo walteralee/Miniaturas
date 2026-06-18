@@ -163,7 +163,7 @@ try:
 
     with open(JSON_FILE, "r", encoding="utf-8") as archivo:
 
-        miniaturas = json.load(archivo)
+        datos = json.load(archivo)
 
 except Exception as e:
 
@@ -174,6 +174,20 @@ except Exception as e:
 # =========================================================
 # VALIDAR JSON
 # =========================================================
+
+if not isinstance(datos, dict):
+
+    print("JSON INVALIDO")
+
+    exit()
+
+if "miniaturas" not in datos:
+
+    print("JSON INVALIDO")
+
+    exit()
+
+miniaturas = datos["miniaturas"]
 
 if not isinstance(miniaturas, list):
 
@@ -303,6 +317,10 @@ for miniatura in miniaturas:
             destino
         )
 
+        miniatura["miniatura"] = (
+            f"/miniaturas/{id_miniatura}.{extension}"
+        )
+
         print(f"[{id_miniatura}] OK")
 
     except Exception as e:
@@ -310,6 +328,29 @@ for miniatura in miniaturas:
         print(f"[{id_miniatura}] ERROR: {e}")
 
         errores.append(id_miniatura)
+
+# =========================================================
+# GUARDAR JSON ACTUALIZADO
+# =========================================================
+
+try:
+
+    with open(
+        JSON_FILE,
+        "w",
+        encoding="utf-8"
+    ) as archivo:
+
+        json.dump(
+            datos,
+            archivo,
+            ensure_ascii=False,
+            indent=2
+        )
+
+except Exception as e:
+
+    print(f"ERROR GUARDANDO JSON: {e}")
 
 # =========================================================
 # RESUMEN

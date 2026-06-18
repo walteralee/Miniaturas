@@ -5,6 +5,7 @@ import {
   crearMiniatura,
   actualizarMiniatura,
   eliminarMiniatura,
+  moverMiniaturaCategoria,
 } from "../controladores/miniaturas.controlador.js";
 
 import { subirMiniatura } from "../middlewares/subida.middleware.js";
@@ -31,6 +32,12 @@ router.put(
   subirMiniatura.single("miniatura"),
 
   actualizarMiniatura,
+);
+
+router.put(
+  "/:id/categoria",
+
+  moverMiniaturaCategoria,
 );
 
 router.delete(

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { crearMiniatura } from "../../servicios/miniaturas.servicio";
 
-function ModalAnnadir({ abierto, alCerrar }) {
+function ModalAnnadir({ abierto, categoriaSeleccionada, alCerrar }) {
   const [url, setUrl] = useState("");
 
   const [archivo, setArchivo] = useState(null);
@@ -26,6 +26,12 @@ function ModalAnnadir({ abierto, alCerrar }) {
       formData.append("url", url);
 
       formData.append("miniatura", archivo);
+
+      formData.append(
+        "categoriaId",
+
+        categoriaSeleccionada === -1 ? 0 : categoriaSeleccionada,
+      );
 
       await crearMiniatura(formData);
 

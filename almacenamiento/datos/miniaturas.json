@@ -1,17 +1,54 @@
-[
-  {
-    "id": 1,
-    "url": "https://youtu.be/niPExbK8lSw?si=02l-I467jUyCVbYl",
-    "miniatura": "/miniaturas/1.png"
-  },
-  {
-    "id": 2,
-    "url": "https://youtu.be/4Dko5W96WHg?si=_WoD2Ry4AKQ8habL",
-    "miniatura": "/miniaturas/2.png"
-  },
-  {
-    "id": 3,
-    "url": "https://youtu.be/5M39KMhVOWA?si=OMeV6kfOjY4YCiFk",
-    "miniatura": "/miniaturas/3.png"
-  }
-]
+{
+  "categorias": [
+    {
+      "id": 0,
+      "nombre": "Sin categoría"
+    },
+    {
+      "id": 1,
+      "nombre": "Cursos de software"
+    },
+    {
+      "id": 2,
+      "nombre": "Musica"
+    }
+  ],
+  "miniaturas": [
+    {
+      "id": 1,
+      "url": "https://youtu.be/niPExbK8lSw?si=02l-I467jUyCVbYl",
+      "miniatura": "/miniaturas/1.png",
+      "categoriaId": 1
+    },
+    {
+      "id": 2,
+      "url": "https://youtu.be/4Dko5W96WHg?si=_WoD2Ry4AKQ8habL",
+      "miniatura": "/miniaturas/2.png",
+      "categoriaId": 1
+    },
+    {
+      "id": 3,
+      "url": "https://www.youtube.com/watch?v=5M39KMhVOWA",
+      "miniatura": "/miniaturas/3.png",
+      "categoriaId": 1
+    },
+    {
+      "id": 4,
+      "url": "https://youtu.be/qBRIXmbjXRY?si=bJ_JSc7W3PeL1OG1",
+      "miniatura": "/miniaturas/4.jpg",
+      "categoriaId": 2
+    },
+    {
+      "id": 5,
+      "url": "https://youtu.be/JxCGM72eE1M?si=H235ZDDlmD-MYQ4X",
+      "miniatura": "/miniaturas/5.jpg",
+      "categoriaId": "2"
+    },
+    {
+      "id": 6,
+      "url": "https://youtu.be/jx1Kayozyhg?si=Ab1LItzJMOce7POa",
+      "miniatura": "/miniaturas/6.jpg",
+      "categoriaId": 2
+    }
+  ]
+}
