@@ -126,20 +126,44 @@ def descargar_imagen(url, destino):
             archivo.write(chunk)
 
 # =========================================================
-# EXISTE MINIATURA
+# EXISTE RUTA EXACTA
 # =========================================================
 
-def existe_miniatura(id_miniatura):
+def existe_ruta_exacta(ruta_miniatura):
+
+    if not ruta_miniatura:
+
+        return False
+
+    ruta_relativa = ruta_miniatura.lstrip("/\\")
+
+    ruta_completa = os.path.join(
+        BASE_DIR,
+        "..",
+        ruta_relativa.replace("/", os.sep)
+    )
+
+    return os.path.exists(ruta_completa)
+
+# =========================================================
+# BUSCAR MINIATURA POR ID
+# =========================================================
+
+def buscar_miniatura_por_id(id_miniatura):
 
     for archivo in os.listdir(MINIATURAS_DIR):
 
+        if archivo == "default.png":
+
+            continue
+
         nombre, _ = os.path.splitext(archivo)
 
-        if nombre == id_miniatura:
+        if nombre == str(id_miniatura):
 
-            return True
+            return archivo
 
-    return False
+    return None
 
 # =========================================================
 # CREAR CARPETA
@@ -163,7 +187,7 @@ try:
 
     with open(JSON_FILE, "r", encoding="utf-8") as archivo:
 
-        datos = json.load(archivo)
+       datos = json.load(archivo)
 
 except Exception as e:
 
@@ -231,6 +255,17 @@ for miniatura in miniaturas:
             miniatura["url"]
         ).strip()
 
+        ruta_miniatura = str(
+            miniatura.get(
+                "miniatura",
+                ""
+            )
+        ).strip()
+
+        if ruta_miniatura == "/miniaturas/default.png":
+
+            ruta_miniatura = ""
+
         if id_miniatura == "":
 
             continue
@@ -260,12 +295,38 @@ for miniatura in miniaturas:
             continue
 
         # =================================================
-        # YA EXISTE
+        # RUTA EXACTA
         # =================================================
 
-        if existe_miniatura(id_miniatura):
+        if (
+            ruta_miniatura
+            and
+            existe_ruta_exacta(ruta_miniatura)
+        ):
 
             print(f"[{id_miniatura}] YA EXISTE")
+
+            continue
+
+        # =================================================
+        # BUSCAR MISMO ID
+        # =================================================
+
+        archivo_existente = buscar_miniatura_por_id(
+            id_miniatura
+        )
+
+        if archivo_existente:
+
+            miniatura["miniatura"] = (
+                f"/miniaturas/{archivo_existente}"
+            )
+
+            print(
+                f"[{id_miniatura}] "
+                f"RUTA CORREGIDA -> "
+                f"{archivo_existente}"
+            )
 
             continue
 
@@ -330,27 +391,37 @@ for miniatura in miniaturas:
         errores.append(id_miniatura)
 
 # =========================================================
-# GUARDAR JSON ACTUALIZADO
+# DEFAULT.PNG
 # =========================================================
 
-try:
+for id_error in errores:
 
-    with open(
-        JSON_FILE,
-        "w",
-        encoding="utf-8"
-    ) as archivo:
+    for miniatura in miniaturas:
 
-        json.dump(
-            datos,
-            archivo,
-            ensure_ascii=False,
-            indent=2
-        )
+        if str(
+            miniatura.get("id")
+        ) == str(id_error):
 
-except Exception as e:
+            miniatura["miniatura"] = (
+                "/miniaturas/default.png"
+            )
 
-    print(f"ERROR GUARDANDO JSON: {e}")
+# =========================================================
+# GUARDAR JSON
+# =========================================================
+
+with open(
+    JSON_FILE,
+    "w",
+    encoding="utf-8"
+) as archivo:
+
+    json.dump(
+        datos,
+        archivo,
+        ensure_ascii=False,
+        indent=2
+    )
 
 # =========================================================
 # RESUMEN
