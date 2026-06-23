@@ -17,3 +17,13 @@ export async function actualizarMiniatura(id, formData) {
 export async function eliminarMiniatura(id) {
   return del(`${API_MINIATURAS}/${id}`);
 }
+
+export async function moverMiniaturaCategoria(id, categoriaId) {
+  return put(
+    `${API_MINIATURAS}/${id}/categoria`,
+
+    JSON.stringify({
+      categoriaId,
+    }),
+  );
+}

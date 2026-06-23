@@ -6,9 +6,13 @@ import path from "path";
 
 import {
   obtenerMiniaturasRepositorio,
+  obtenerMiniaturaPorIdRepositorio,
   crearMiniaturaRepositorio,
   guardarMiniaturasRepositorio,
+  moverMiniaturaCategoriaRepositorio,
 } from "../repositorios/miniaturas.repositorio.js";
+
+import { obtenerCategoriaPorIdRepositorio } from "../repositorios/categorias.repositorio.js";
 
 import { generarID } from "../utilidades/identificadores.utilidades.js";
 
@@ -38,7 +42,6 @@ export function crearMiniaturaServicio(datos) {
     "..",
     "almacenamiento",
     "miniaturas",
-
     path.basename(datos.miniatura),
   );
 
@@ -47,7 +50,6 @@ export function crearMiniaturaServicio(datos) {
     "..",
     "almacenamiento",
     "miniaturas",
-
     nombreFinal,
   );
 
@@ -59,6 +61,8 @@ export function crearMiniaturaServicio(datos) {
     url: datos.url,
 
     miniatura: `/miniaturas/${nombreFinal}`,
+
+    categoriaId: datos.categoriaId ?? 0,
   };
 
   return crearMiniaturaRepositorio(nuevaMiniatura);
@@ -81,7 +85,6 @@ export function eliminarMiniaturaServicio(id) {
       "..",
       "almacenamiento",
       "miniaturas",
-
       path.basename(miniatura.miniatura),
     );
 
@@ -116,7 +119,6 @@ export function actualizarMiniaturaServicio(id, datos) {
       "..",
       "almacenamiento",
       "miniaturas",
-
       path.basename(miniaturas[indice].miniatura),
     );
 
@@ -131,7 +133,6 @@ export function actualizarMiniaturaServicio(id, datos) {
       "..",
       "almacenamiento",
       "miniaturas",
-
       path.basename(datos.miniatura),
     );
 
@@ -140,7 +141,6 @@ export function actualizarMiniaturaServicio(id, datos) {
       "..",
       "almacenamiento",
       "miniaturas",
-
       nombreFinal,
     );
 
@@ -160,4 +160,20 @@ export function actualizarMiniaturaServicio(id, datos) {
   guardarMiniaturasRepositorio(miniaturas);
 
   return miniaturas[indice];
+}
+
+export function moverMiniaturaCategoriaServicio(id, categoriaId) {
+  const miniatura = obtenerMiniaturaPorIdRepositorio(id);
+
+  if (!miniatura) {
+    throw new ValidacionError("Miniatura no encontrada");
+  }
+
+  const categoria = obtenerCategoriaPorIdRepositorio(categoriaId);
+
+  if (!categoria) {
+    throw new ValidacionError("Categoría no encontrada");
+  }
+
+  return moverMiniaturaCategoriaRepositorio(id, categoriaId);
 }

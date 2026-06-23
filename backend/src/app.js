@@ -8,6 +8,8 @@ import path from "path";
 
 import miniaturasRutas from "./rutas/miniaturas.rutas.js";
 
+import categoriasRutas from "./rutas/categorias.rutas.js";
+
 import { erroresMiddleware } from "./middlewares/errores.middleware.js";
 
 import { noEncontradoMiddleware } from "./middlewares/no-encontrado.middleware.js";
@@ -27,6 +29,8 @@ app.use(
 );
 
 app.use("/api/miniaturas", miniaturasRutas);
+
+app.use("/api/categorias", categoriasRutas);
 
 app.use(noEncontradoMiddleware);
 

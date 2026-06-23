@@ -6,9 +6,11 @@ function MenuContextual({
   x,
   y,
   miniatura,
+  categorias,
   recargarMiniaturas,
   alCerrar,
   alActualizar,
+  alMoverCategoria,
 }) {
   useEffect(() => {
     function cerrarMenu() {
@@ -52,6 +54,15 @@ function MenuContextual({
     alActualizar(miniatura);
   }
 
+  function manejarMoverCategoria() {
+    alCerrar();
+
+    alMoverCategoria(miniatura);
+  }
+
+  const mostrarMoverCategoria =
+    categorias.filter((categoria) => categoria.id !== 0).length > 0;
+
   return (
     <div
       className="menu-contextual"
@@ -63,6 +74,10 @@ function MenuContextual({
       onClick={(e) => e.stopPropagation()}
     >
       <button onClick={manejarActualizar}>ACTUALIZAR</button>
+
+      {mostrarMoverCategoria && (
+        <button onClick={manejarMoverCategoria}>MOVER A</button>
+      )}
 
       <button onClick={manejarEliminar}>BORRAR</button>
     </div>

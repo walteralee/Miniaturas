@@ -5,6 +5,7 @@ import {
   crearMiniaturaServicio,
   eliminarMiniaturaServicio,
   actualizarMiniaturaServicio,
+  moverMiniaturaCategoriaServicio,
 } from "../servicios/miniaturas.servicio.js";
 
 import { obtenerNombreArchivo } from "../servicios/archivos.servicio.js";
@@ -25,6 +26,8 @@ export function crearMiniatura(req, res, next) {
       url: req.body.url,
 
       miniatura: obtenerNombreArchivo(req.file),
+
+      categoriaId: req.body.categoriaId,
     });
 
     res.status(201).json(nuevaMiniatura);
@@ -58,6 +61,19 @@ export function actualizarMiniatura(req, res, next) {
     );
 
     res.json(miniaturaActualizada);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export function moverMiniaturaCategoria(req, res, next) {
+  try {
+    const miniatura = moverMiniaturaCategoriaServicio(
+      req.params.id,
+      req.body.categoriaId,
+    );
+
+    res.json(miniatura);
   } catch (error) {
     next(error);
   }
