@@ -40,13 +40,13 @@
     },
     {
       "id": 5,
-      "url": "https://youtu.be/JxCGM72eE1M?si=H235ZDDlmD-MYQ4X",
+      "url": "https://youtu.be/jx1Kayozyhg?si=Ab1LItzJMOce7POa",
       "miniatura": "/miniaturas/5.jpg",
-      "categoriaId": "2"
+      "categoriaId": 2
     },
     {
       "id": 6,
-      "url": "https://youtu.be/jx1Kayozyhg?si=Ab1LItzJMOce7POa",
+      "url": "https://youtu.be/WLI3aTH9awQ?si=5o4x5iZI9l3omed_",
       "miniatura": "/miniaturas/6.jpg",
       "categoriaId": 2
     }
