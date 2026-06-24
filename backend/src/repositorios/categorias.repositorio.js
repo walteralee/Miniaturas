@@ -1,71 +1,84 @@
 // backend/src/repositorios/categorias.repositorio.js
 
-import { leerJSON, guardarJSON } from "../utilidades/json.utilidades.js";
+import { abrirConexion } from "../utilidades/sqlite.utilidades.js";
 
-import { obtenerRutaJSON } from "../utilidades/rutas.utilidades.js";
-
-const RUTA_JSON = obtenerRutaJSON();
+const db = abrirConexion();
 
 export function obtenerCategoriasRepositorio() {
-  const datos = leerJSON(RUTA_JSON);
-
-  return datos.categorias;
+  return db
+    .prepare(
+      `
+      SELECT
+        id,
+        nombre
+      FROM categorias
+      ORDER BY id
+    `,
+    )
+    .all();
 }
 
 export function obtenerCategoriaPorIdRepositorio(id) {
-  const datos = leerJSON(RUTA_JSON);
-
-  return datos.categorias.find(
-    (categoria) => String(categoria.id) === String(id),
-  );
+  return db
+    .prepare(
+      `
+      SELECT
+        id,
+        nombre
+      FROM categorias
+      WHERE id = ?
+    `,
+    )
+    .get(id);
 }
 
 export function crearCategoriaRepositorio(categoriaNueva) {
-  const datos = leerJSON(RUTA_JSON);
-
-  datos.categorias.push(categoriaNueva);
-
-  guardarJSON(RUTA_JSON, datos);
+  db.prepare(
+    `
+    INSERT INTO categorias (
+      id,
+      nombre
+    )
+    VALUES (?, ?)
+  `,
+  ).run(categoriaNueva.id, categoriaNueva.nombre);
 
   return categoriaNueva;
 }
 
 export function renombrarCategoriaRepositorio(id, nombre) {
-  const datos = leerJSON(RUTA_JSON);
+  const resultado = db
+    .prepare(
+      `
+    UPDATE categorias
+    SET nombre = ?
+    WHERE id = ?
+  `,
+    )
+    .run(nombre, id);
 
-  const categoria = datos.categorias.find(
-    (categoria) => String(categoria.id) === String(id),
-  );
-
-  if (!categoria) {
+  if (resultado.changes === 0) {
     return null;
   }
 
-  categoria.nombre = nombre;
-
-  guardarJSON(RUTA_JSON, datos);
-
-  return categoria;
+  return obtenerCategoriaPorIdRepositorio(id);
 }
 
 export function eliminarCategoriaRepositorio(id) {
-  const datos = leerJSON(RUTA_JSON);
-
-  datos.categorias = datos.categorias.filter(
-    (categoria) => String(categoria.id) !== String(id),
-  );
-
-  guardarJSON(RUTA_JSON, datos);
+  db.prepare(
+    `
+    DELETE FROM categorias
+    WHERE id = ?
+  `,
+  ).run(id);
 }
 
 export function moverMiniaturasASinCategoriaRepositorio(idCategoria) {
-  const datos = leerJSON(RUTA_JSON);
-
-  datos.miniaturas.forEach((miniatura) => {
-    if (String(miniatura.categoriaId) === String(idCategoria)) {
-      miniatura.categoriaId = 0;
-    }
-  });
-
-  guardarJSON(RUTA_JSON, datos);
+  db.prepare(
+    `
+    UPDATE miniaturas
+    SET categoriaId = 0
+    WHERE categoriaId = ?
+  `,
+  ).run(idCategoria);
 }

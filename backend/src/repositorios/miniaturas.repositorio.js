@@ -1,57 +1,96 @@
 // backend/src/repositorios/miniaturas.repositorio.js
 
-import { leerJSON, guardarJSON } from "../utilidades/json.utilidades.js";
+import { abrirConexion } from "../utilidades/sqlite.utilidades.js";
 
-import { obtenerRutaJSON } from "../utilidades/rutas.utilidades.js";
-
-const RUTA_JSON = obtenerRutaJSON();
+const db = abrirConexion();
 
 export function obtenerMiniaturasRepositorio() {
-  const datos = leerJSON(RUTA_JSON);
-
-  return datos.miniaturas;
+  return db
+    .prepare(
+      `
+      SELECT
+        id,
+        url,
+        miniatura,
+        categoriaId
+      FROM miniaturas
+      ORDER BY id
+    `,
+    )
+    .all();
 }
 
 export function obtenerMiniaturaPorIdRepositorio(id) {
-  const datos = leerJSON(RUTA_JSON);
-
-  return datos.miniaturas.find(
-    (miniatura) => String(miniatura.id) === String(id),
-  );
+  return db
+    .prepare(
+      `
+      SELECT
+        id,
+        url,
+        miniatura,
+        categoriaId
+      FROM miniaturas
+      WHERE id = ?
+    `,
+    )
+    .get(id);
 }
 
 export function guardarMiniaturasRepositorio(miniaturas) {
-  const datos = leerJSON(RUTA_JSON);
+  const actualizar = db.prepare(`
+    UPDATE miniaturas
+    SET
+      url = ?,
+      miniatura = ?,
+      categoriaId = ?
+    WHERE id = ?
+  `);
 
-  datos.miniaturas = miniaturas;
-
-  guardarJSON(RUTA_JSON, datos);
+  for (const miniatura of miniaturas) {
+    actualizar.run(
+      miniatura.url,
+      miniatura.miniatura,
+      miniatura.categoriaId,
+      miniatura.id,
+    );
+  }
 }
 
 export function crearMiniaturaRepositorio(miniaturaNueva) {
-  const datos = leerJSON(RUTA_JSON);
-
-  datos.miniaturas.push(miniaturaNueva);
-
-  guardarJSON(RUTA_JSON, datos);
+  db.prepare(
+    `
+    INSERT INTO miniaturas (
+      id,
+      url,
+      miniatura,
+      categoriaId
+    )
+    VALUES (?, ?, ?, ?)
+  `,
+  ).run(
+    miniaturaNueva.id,
+    miniaturaNueva.url,
+    miniaturaNueva.miniatura,
+    miniaturaNueva.categoriaId,
+  );
 
   return miniaturaNueva;
 }
 
 export function moverMiniaturaCategoriaRepositorio(id, categoriaId) {
-  const datos = leerJSON(RUTA_JSON);
+  const resultado = db
+    .prepare(
+      `
+    UPDATE miniaturas
+    SET categoriaId = ?
+    WHERE id = ?
+  `,
+    )
+    .run(categoriaId, id);
 
-  const miniatura = datos.miniaturas.find(
-    (miniatura) => String(miniatura.id) === String(id),
-  );
-
-  if (!miniatura) {
+  if (resultado.changes === 0) {
     return null;
   }
 
-  miniatura.categoriaId = Number(categoriaId);
-
-  guardarJSON(RUTA_JSON, datos);
-
-  return miniatura;
+  return obtenerMiniaturaPorIdRepositorio(id);
 }
