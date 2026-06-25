@@ -39,10 +39,10 @@ Desktop.ini
 .DS_Store
 
 # ==================================================
-# ENTORNOS LOCALES
+# ENTORNOS
 # ==================================================
 
-.env.local
+frontend/.env
 
 .env.production
 

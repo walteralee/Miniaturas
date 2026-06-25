@@ -10,6 +10,8 @@ import "./estilos/carga.css";
 
 import App from "./App.jsx";
 
+alert(import.meta.env.VITE_API_URL);
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />
