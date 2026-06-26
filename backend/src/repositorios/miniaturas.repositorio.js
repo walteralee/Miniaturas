@@ -94,3 +94,16 @@ export function moverMiniaturaCategoriaRepositorio(id, categoriaId) {
 
   return obtenerMiniaturaPorIdRepositorio(id);
 }
+
+export function eliminarMiniaturaRepositorio(id) {
+  const resultado = db
+    .prepare(
+      `
+      DELETE FROM miniaturas
+      WHERE id = ?
+    `,
+    )
+    .run(id);
+
+  return resultado.changes > 0;
+}
