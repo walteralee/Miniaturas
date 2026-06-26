@@ -1,5 +1,5 @@
 import os
-import json
+import sqlite3
 import requests
 
 from bs4 import BeautifulSoup
@@ -13,12 +13,12 @@ BASE_DIR = os.path.dirname(
     os.path.abspath(__file__)
 )
 
-JSON_FILE = os.path.join(
+DB_FILE = os.path.join(
     BASE_DIR,
     "..",
     "almacenamiento",
     "datos",
-    "miniaturas.json"
+    "miniaturas.db"
 )
 
 MINIATURAS_DIR = os.path.join(
@@ -174,51 +174,52 @@ if not os.path.exists(MINIATURAS_DIR):
     os.makedirs(MINIATURAS_DIR)
 
 # =========================================================
-# CARGAR JSON
+# CARGAR SQLITE
 # =========================================================
 
-if not os.path.exists(JSON_FILE):
+if not os.path.exists(DB_FILE):
 
-    print(f"No existe: {JSON_FILE}")
+    print(f"No existe: {DB_FILE}")
 
     exit()
 
 try:
 
-    with open(JSON_FILE, "r", encoding="utf-8") as archivo:
+    conexion = sqlite3.connect(DB_FILE)
 
-       datos = json.load(archivo)
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            url,
+            miniatura,
+            categoriaId
+        FROM miniaturas
+        ORDER BY id
+    """)
+
+    filas = cursor.fetchall()
+
+    miniaturas = []
+
+    for fila in filas:
+
+        miniaturas.append({
+            "id": fila[0],
+            "url": fila[1],
+            "miniatura": fila[2],
+            "categoriaId": fila[3]
+        })
+
+    conexion.close()
 
 except Exception as e:
 
-    print(f"ERROR JSON: {e}")
+    print(f"ERROR SQLITE: {e}")
 
     exit()
-
-# =========================================================
-# VALIDAR JSON
-# =========================================================
-
-if not isinstance(datos, dict):
-
-    print("JSON INVALIDO")
-
-    exit()
-
-if "miniaturas" not in datos:
-
-    print("JSON INVALIDO")
-
-    exit()
-
-miniaturas = datos["miniaturas"]
-
-if not isinstance(miniaturas, list):
-
-    print("JSON INVALIDO")
-
-    exit()
-
+    
 # =========================================================
 # DESCARGAR MINIATURAS
 # =========================================================
@@ -407,21 +408,36 @@ for id_error in errores:
             )
 
 # =========================================================
-# GUARDAR JSON
+# GUARDAR SQLITE
 # =========================================================
 
-with open(
-    JSON_FILE,
-    "w",
-    encoding="utf-8"
-) as archivo:
+try:
 
-    json.dump(
-        datos,
-        archivo,
-        ensure_ascii=False,
-        indent=2
-    )
+    conexion = sqlite3.connect(DB_FILE)
+
+    cursor = conexion.cursor()
+
+    for miniatura in miniaturas:
+
+        cursor.execute(
+            """
+            UPDATE miniaturas
+            SET miniatura = ?
+            WHERE id = ?
+            """,
+            (
+                miniatura["miniatura"],
+                miniatura["id"]
+            )
+        )
+
+    conexion.commit()
+
+    conexion.close()
+
+except Exception as e:
+
+    print(f"ERROR SQLITE: {e}")
 
 # =========================================================
 # RESUMEN

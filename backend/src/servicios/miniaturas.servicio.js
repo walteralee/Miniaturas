@@ -10,6 +10,7 @@ import {
   crearMiniaturaRepositorio,
   guardarMiniaturasRepositorio,
   moverMiniaturaCategoriaRepositorio,
+  eliminarMiniaturaRepositorio,
 } from "../repositorios/miniaturas.repositorio.js";
 
 import { obtenerCategoriaPorIdRepositorio } from "../repositorios/categorias.repositorio.js";
@@ -91,11 +92,7 @@ export function eliminarMiniaturaServicio(id) {
     eliminarArchivo(rutaArchivo);
   }
 
-  const nuevasMiniaturas = miniaturas.filter(
-    (miniatura) => String(miniatura.id) !== String(id),
-  );
-
-  guardarMiniaturasRepositorio(nuevasMiniaturas);
+  eliminarMiniaturaRepositorio(id);
 }
 
 export function actualizarMiniaturaServicio(id, datos) {
