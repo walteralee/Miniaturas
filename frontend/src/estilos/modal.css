@@ -489,3 +489,78 @@
 .mover-categoria-boton:hover {
   background: #1d4ed8;
 }
+
+/* ==================================================
+   TABLETS
+================================================== */
+
+@media (max-width: 1024px) {
+  .update-modal,
+  .categorias-modal,
+  .mover-categoria-modal {
+    width: 90%;
+    max-width: 560px;
+  }
+}
+
+/* ==================================================
+   MOVILES
+================================================== */
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 16px;
+  }
+
+  .update-modal,
+  .categorias-modal,
+  .mover-categoria-modal {
+    width: 100%;
+    max-width: none;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    padding: 20px;
+
+    border-radius: 16px;
+  }
+
+  .update-modal h2,
+  .categorias-modal h2,
+  .mover-categoria-modal h2 {
+    font-size: 22px;
+
+    margin-bottom: 18px;
+  }
+
+  .categoria-item {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 12px;
+  }
+
+  .categoria-acciones {
+    width: 100%;
+
+    display: flex;
+  }
+
+  .categoria-acciones button {
+    flex: 1;
+  }
+
+  .update-modal input[type="text"],
+  .categorias-modal input[type="text"],
+  .categoria-input,
+  .mover-categoria-select,
+  .file-label,
+  .update-modal button[type="submit"],
+  .categorias-modal > button:not(.close-btn),
+  .mover-categoria-boton {
+    height: 50px;
+  }
+}
