@@ -55,3 +55,39 @@ a {
 .menu-contextual button:hover {
   background: #1d4ed8;
 }
+
+/* ==================================================
+   TABLETS
+================================================== */
+
+@media (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+/* ==================================================
+   MOVILES
+================================================== */
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+
+    overflow-x: hidden;
+  }
+
+  .menu-contextual {
+    width: 170px;
+  }
+
+  .menu-contextual button {
+    width: 100%;
+
+    height: 46px;
+
+    font-size: 13px;
+
+    padding: 0 14px;
+  }
+}
