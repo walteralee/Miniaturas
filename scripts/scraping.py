@@ -126,20 +126,44 @@ def descargar_imagen(url, destino):
             archivo.write(chunk)
 
 # =========================================================
-# EXISTE MINIATURA
+# EXISTE RUTA EXACTA
 # =========================================================
 
-def existe_miniatura(id_miniatura):
+def existe_ruta_exacta(ruta_miniatura):
+
+    if not ruta_miniatura:
+
+        return False
+
+    ruta_relativa = ruta_miniatura.lstrip("/\\")
+
+    ruta_completa = os.path.join(
+        BASE_DIR,
+        "..",
+        ruta_relativa.replace("/", os.sep)
+    )
+
+    return os.path.exists(ruta_completa)
+
+# =========================================================
+# BUSCAR MINIATURA POR ID
+# =========================================================
+
+def buscar_miniatura_por_id(id_miniatura):
 
     for archivo in os.listdir(MINIATURAS_DIR):
 
+        if archivo == "default.png":
+
+            continue
+
         nombre, _ = os.path.splitext(archivo)
 
-        if nombre == id_miniatura:
+        if nombre == str(id_miniatura):
 
-            return True
+            return archivo
 
-    return False
+    return None
 
 # =========================================================
 # CREAR CARPETA
@@ -163,7 +187,7 @@ try:
 
     with open(JSON_FILE, "r", encoding="utf-8") as archivo:
 
-        miniaturas = json.load(archivo)
+       datos = json.load(archivo)
 
 except Exception as e:
 
@@ -175,11 +199,13 @@ except Exception as e:
 # VALIDAR JSON
 # =========================================================
 
-if not isinstance(miniaturas, list):
+if not isinstance(datos, list):
 
     print("JSON INVALIDO")
 
     exit()
+
+miniaturas = datos
 
 # =========================================================
 # DESCARGAR MINIATURAS
@@ -217,6 +243,17 @@ for miniatura in miniaturas:
             miniatura["url"]
         ).strip()
 
+        ruta_miniatura = str(
+            miniatura.get(
+                "miniatura",
+                ""
+            )
+        ).strip()
+
+        if ruta_miniatura == "/miniaturas/default.png":
+
+            ruta_miniatura = ""
+
         if id_miniatura == "":
 
             continue
@@ -246,12 +283,38 @@ for miniatura in miniaturas:
             continue
 
         # =================================================
-        # YA EXISTE
+        # RUTA EXACTA
         # =================================================
 
-        if existe_miniatura(id_miniatura):
+        if (
+            ruta_miniatura
+            and
+            existe_ruta_exacta(ruta_miniatura)
+        ):
 
             print(f"[{id_miniatura}] YA EXISTE")
+
+            continue
+
+        # =================================================
+        # BUSCAR MISMO ID
+        # =================================================
+
+        archivo_existente = buscar_miniatura_por_id(
+            id_miniatura
+        )
+
+        if archivo_existente:
+
+            miniatura["miniatura"] = (
+                f"/miniaturas/{archivo_existente}"
+            )
+
+            print(
+                f"[{id_miniatura}] "
+                f"RUTA CORREGIDA -> "
+                f"{archivo_existente}"
+            )
 
             continue
 
@@ -303,6 +366,10 @@ for miniatura in miniaturas:
             destino
         )
 
+        miniatura["miniatura"] = (
+            f"/miniaturas/{id_miniatura}.{extension}"
+        )
+
         print(f"[{id_miniatura}] OK")
 
     except Exception as e:
@@ -310,6 +377,39 @@ for miniatura in miniaturas:
         print(f"[{id_miniatura}] ERROR: {e}")
 
         errores.append(id_miniatura)
+
+# =========================================================
+# DEFAULT.PNG
+# =========================================================
+
+for id_error in errores:
+
+    for miniatura in miniaturas:
+
+        if str(
+            miniatura.get("id")
+        ) == str(id_error):
+
+            miniatura["miniatura"] = (
+                "/miniaturas/default.png"
+            )
+
+# =========================================================
+# GUARDAR JSON
+# =========================================================
+
+with open(
+    JSON_FILE,
+    "w",
+    encoding="utf-8"
+) as archivo:
+
+    json.dump(
+        datos,
+        archivo,
+        ensure_ascii=False,
+        indent=2
+    )
 
 # =========================================================
 # RESUMEN
