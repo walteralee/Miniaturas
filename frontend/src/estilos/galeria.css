@@ -99,3 +99,47 @@
 .menu-contextual button:last-child:hover {
   background: #991b1b;
 }
+
+/* ==================================================
+   TABLETS
+================================================== */
+
+@media (max-width: 1024px) {
+
+  .galeria {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 16px;
+
+    padding: 16px;
+  }
+
+  .thumb {
+    height: 220px;
+  }
+
+}
+
+/* ==================================================
+   MOVILES
+================================================== */
+
+@media (max-width: 768px) {
+
+  .galeria {
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+
+    padding: 14px;
+  }
+
+  .thumb {
+    height: 210px;
+  }
+
+  .menu-contextual {
+    width: 170px;
+  }
+
+}
