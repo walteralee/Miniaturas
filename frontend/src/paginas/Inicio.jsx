@@ -94,7 +94,11 @@ function Inicio() {
     try {
       await eliminarCategoria(id);
 
+      setCategoriaSeleccionada(-1);
+
       await recargarCategorias();
+
+      await recargarMiniaturas();
     } catch (error) {
       console.error(error);
     }
