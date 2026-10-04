@@ -6,97 +6,77 @@ import {
   crearCategoriaRepositorio,
   renombrarCategoriaRepositorio,
   eliminarCategoriaRepositorio,
-  moverMiniaturasASinCategoriaRepositorio,
 } from "../repositorios/categorias.repositorio.js";
 
+import { validarNombreCategoria } from "../validadores/categorias.validador.js";
+
+import { validarId } from "../validadores/miniaturas.validador.js";
+
+import { ID_SIN_CATEGORIA } from "../constantes/categorias.constantes.js";
+
 import { ValidacionError } from "../errores/validacion.error.js";
+
+import { NoEncontradoError } from "../errores/no-encontrado.error.js";
+
+function normalizar(nombre) {
+  return nombre.trim().toLocaleLowerCase("es");
+}
+
+function comprobarNombreLibre(nombre, idIgnorado = null) {
+  const existe = obtenerCategoriasRepositorio().some(
+    (categoria) =>
+      categoria.id !== idIgnorado &&
+      normalizar(categoria.nombre) === normalizar(nombre),
+  );
+
+  if (existe) {
+    throw new ValidacionError("Ya existe una categoría con ese nombre");
+  }
+}
+
+// "Sin categoría" es fija: no se puede renombrar ni borrar
+function obtenerCategoriaEditable(id) {
+  const idCategoria = validarId(id, "id de categoría");
+
+  if (idCategoria === ID_SIN_CATEGORIA) {
+    throw new ValidacionError(
+      "La categoría 'Sin categoría' no se puede modificar",
+    );
+  }
+
+  const categoria = obtenerCategoriaPorIdRepositorio(idCategoria);
+
+  if (!categoria) {
+    throw new NoEncontradoError("Categoría no encontrada");
+  }
+
+  return categoria;
+}
 
 export function obtenerCategoriasServicio() {
   return obtenerCategoriasRepositorio();
 }
 
 export function crearCategoriaServicio(nombre) {
-  const nombreLimpio = nombre?.trim();
+  const nombreLimpio = validarNombreCategoria(nombre);
 
-  if (!nombreLimpio) {
-    throw new ValidacionError("Nombre de categoría inválido");
-  }
+  comprobarNombreLibre(nombreLimpio);
 
-  const categorias = obtenerCategoriasRepositorio();
-
-  const existe = categorias.some(
-    (categoria) =>
-      categoria.nombre.toLowerCase().trim() ===
-      nombreLimpio.toLowerCase().trim(),
-  );
-
-  if (existe) {
-    throw new ValidacionError("La categoría ya existe");
-  }
-
-  const nuevoId =
-    categorias.length === 0
-      ? 1
-      : Math.max(...categorias.map((categoria) => Number(categoria.id))) + 1;
-
-  const categoriaNueva = {
-    id: nuevoId,
-
-    nombre: nombreLimpio,
-  };
-
-  return crearCategoriaRepositorio(categoriaNueva);
+  return crearCategoriaRepositorio(nombreLimpio);
 }
 
 export function renombrarCategoriaServicio(id, nombre) {
-  const categoria = obtenerCategoriaPorIdRepositorio(id);
+  const categoria = obtenerCategoriaEditable(id);
 
-  if (!categoria) {
-    throw new ValidacionError("Categoría no encontrada");
-  }
+  const nombreLimpio = validarNombreCategoria(nombre);
 
-  if (categoria.nombre === "Sin categoría") {
-    throw new ValidacionError(
-      "No se puede renombrar la categoría 'Sin categoría'",
-    );
-  }
+  comprobarNombreLibre(nombreLimpio, categoria.id);
 
-  const nombreLimpio = nombre?.trim();
-
-  if (!nombreLimpio) {
-    throw new ValidacionError("Nombre de categoría inválido");
-  }
-
-  const categorias = obtenerCategoriasRepositorio();
-
-  const existe = categorias.some(
-    (categoriaActual) =>
-      String(categoriaActual.id) !== String(id) &&
-      categoriaActual.nombre.toLowerCase().trim() ===
-        nombreLimpio.toLowerCase().trim(),
-  );
-
-  if (existe) {
-    throw new ValidacionError("La categoría ya existe");
-  }
-
-  return renombrarCategoriaRepositorio(id, nombreLimpio);
+  return renombrarCategoriaRepositorio(categoria.id, nombreLimpio);
 }
 
 export function eliminarCategoriaServicio(id) {
-  const categoria = obtenerCategoriaPorIdRepositorio(id);
+  const categoria = obtenerCategoriaEditable(id);
 
-  if (!categoria) {
-    throw new ValidacionError("Categoría no encontrada");
-  }
-
-  if (categoria.nombre === "Sin categoría") {
-    throw new ValidacionError(
-      "No se puede eliminar la categoría 'Sin categoría'",
-    );
-  }
-
-  moverMiniaturasASinCategoriaRepositorio(id);
-
-  eliminarCategoriaRepositorio(id);
+  eliminarCategoriaRepositorio(categoria.id);
 }
