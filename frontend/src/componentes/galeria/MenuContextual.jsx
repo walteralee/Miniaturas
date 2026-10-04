@@ -1,85 +1,86 @@
 import { useEffect } from "react";
 
-import { eliminarMiniatura } from "../../servicios/miniaturas.servicio";
-
 function MenuContextual({
   x,
   y,
   miniatura,
-  categorias,
-  recargarMiniaturas,
+  puedeMover,
   alCerrar,
   alActualizar,
   alMoverCategoria,
+  alEliminar,
 }) {
   useEffect(() => {
-    function cerrarMenu() {
-      alCerrar();
+    function alPulsarTecla(evento) {
+      if (evento.key === "Escape") {
+        alCerrar();
+      }
     }
 
-    document.addEventListener("click", cerrarMenu);
+    document.addEventListener("click", alCerrar);
 
-    window.addEventListener("scroll", cerrarMenu);
+    document.addEventListener("contextmenu", alCerrar);
+
+    document.addEventListener("keydown", alPulsarTecla);
+
+    window.addEventListener("scroll", alCerrar, true);
+
+    window.addEventListener("resize", alCerrar);
 
     return () => {
-      document.removeEventListener("click", cerrarMenu);
+      document.removeEventListener("click", alCerrar);
 
-      window.removeEventListener("scroll", cerrarMenu);
+      document.removeEventListener("contextmenu", alCerrar);
+
+      document.removeEventListener("keydown", alPulsarTecla);
+
+      window.removeEventListener("scroll", alCerrar, true);
+
+      window.removeEventListener("resize", alCerrar);
     };
   }, [alCerrar]);
 
-  async function manejarEliminar() {
+  function ejecutar(accion) {
     alCerrar();
 
-    const confirmar = window.confirm(
-      "¿Seguro que deseas eliminar esta miniatura?",
-    );
-
-    if (!confirmar) {
-      return;
-    }
-
-    try {
-      await eliminarMiniatura(miniatura.id);
-
-      await recargarMiniaturas();
-    } catch (error) {
-      console.error(error);
-    }
+    accion(miniatura);
   }
-
-  function manejarActualizar() {
-    alCerrar();
-
-    alActualizar(miniatura);
-  }
-
-  function manejarMoverCategoria() {
-    alCerrar();
-
-    alMoverCategoria(miniatura);
-  }
-
-  const mostrarMoverCategoria =
-    categorias.filter((categoria) => categoria.id !== 0).length > 0;
 
   return (
     <div
       className="menu-contextual"
-      style={{
-        position: "fixed",
-        left: x,
-        top: y,
-      }}
-      onClick={(e) => e.stopPropagation()}
+      role="menu"
+      style={{ left: x, top: y }}
+      onClick={(evento) => evento.stopPropagation()}
     >
-      <button onClick={manejarActualizar}>ACTUALIZAR</button>
+      <button
+        type="button"
+        role="menuitem"
+        className="menu-actualizar"
+        onClick={() => ejecutar(alActualizar)}
+      >
+        ACTUALIZAR
+      </button>
 
-      {mostrarMoverCategoria && (
-        <button onClick={manejarMoverCategoria}>MOVER A</button>
+      {puedeMover && (
+        <button
+          type="button"
+          role="menuitem"
+          className="menu-mover"
+          onClick={() => ejecutar(alMoverCategoria)}
+        >
+          MOVER A
+        </button>
       )}
 
-      <button onClick={manejarEliminar}>BORRAR</button>
+      <button
+        type="button"
+        role="menuitem"
+        className="menu-borrar"
+        onClick={() => ejecutar(alEliminar)}
+      >
+        BORRAR
+      </button>
     </div>
   );
 }

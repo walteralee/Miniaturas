@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { obtenerMiniaturas } from "../servicios/miniaturas.servicio";
 
@@ -9,7 +9,7 @@ export function useMiniaturas() {
 
   const [error, setError] = useState(null);
 
-  async function recargarMiniaturas() {
+  const recargarMiniaturas = useCallback(async () => {
     try {
       const datos = await obtenerMiniaturas();
 
@@ -17,30 +17,24 @@ export function useMiniaturas() {
 
       setError(null);
     } catch (err) {
-      console.error(err);
-
       setError(err);
+    } finally {
+      setCargando(false);
     }
-  }
+  }, []);
 
+  // Carga inicial (ignora la respuesta si el componente ya se desmontó)
   useEffect(() => {
-    async function iniciar() {
-      try {
-        const datos = await obtenerMiniaturas();
+    let activo = true;
 
-        setMiniaturas(datos);
+    obtenerMiniaturas()
+      .then((datos) => activo && setMiniaturas(datos))
+      .catch((err) => activo && setError(err))
+      .finally(() => activo && setCargando(false));
 
-        setError(null);
-      } catch (err) {
-        console.error(err);
-
-        setError(err);
-      } finally {
-        setCargando(false);
-      }
-    }
-
-    iniciar();
+    return () => {
+      activo = false;
+    };
   }, []);
 
   return {

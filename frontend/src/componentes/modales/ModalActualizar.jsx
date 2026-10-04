@@ -1,68 +1,90 @@
 import { useState } from "react";
 
+import Modal from "../comunes/Modal";
+import SelectorImagen from "../comunes/SelectorImagen";
+import MensajeError from "../comunes/MensajeError";
+
 import { actualizarMiniatura } from "../../servicios/miniaturas.servicio";
 
-function ModalActualizar({ abierto, miniatura, alCerrar }) {
+import { esURLValida } from "../../utilidades/validacion.utilidades";
+
+function ModalActualizar({ miniatura, alCerrar, alGuardar }) {
+  const [url, setUrl] = useState(miniatura.url);
+
   const [archivo, setArchivo] = useState(null);
 
-  async function manejarEnvio(e) {
-    e.preventDefault();
+  const [guardando, setGuardando] = useState(false);
 
-    if (!e.target.url.value.trim()) {
-      alert("LA URL ES OBLIGATORIA");
+  const [error, setError] = useState("");
+
+  const urlCambiada = url.trim() !== miniatura.url;
+
+  async function manejarEnvio(evento) {
+    evento.preventDefault();
+
+    if (!esURLValida(url)) {
+      setError("Introduce un enlace válido (debe empezar por http:// o https://)");
 
       return;
     }
 
+    if (!urlCambiada && !archivo) {
+      alCerrar();
+
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("url", url.trim());
+
+    if (archivo) {
+      formData.append("miniatura", archivo);
+    }
+
     try {
-      const formData = new FormData();
+      setGuardando(true);
 
-      formData.append("url", e.target.url.value);
+      setError("");
 
-      if (archivo) {
-        formData.append("miniatura", archivo);
-      }
+      alGuardar(await actualizarMiniatura(miniatura.id, formData));
+    } catch (err) {
+      setError(err.message);
 
-      await actualizarMiniatura(miniatura.id, formData);
-
-      window.location.reload();
-    } catch (error) {
-      console.error(error);
+      setGuardando(false);
     }
   }
 
-  if (!abierto || !miniatura) {
-    return null;
-  }
-
   return (
-    <div className="modal-overlay" onClick={alCerrar}>
-      <div className="update-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={alCerrar}>
-          ✕
+    <Modal titulo="ACTUALIZAR" alCerrar={alCerrar}>
+      <form className="formulario" onSubmit={manejarEnvio}>
+        <input
+          type="url"
+          aria-label="Enlace"
+          value={url}
+          onChange={(evento) => setUrl(evento.target.value)}
+        />
+
+        <SelectorImagen
+          archivo={archivo}
+          texto="Cambiar miniatura"
+          alCambiar={setArchivo}
+        />
+
+        {urlCambiada && !archivo && (
+          <p className="ayuda">
+            Al cambiar el enlace sin elegir imagen, se descargará la nueva
+            automáticamente.
+          </p>
+        )}
+
+        <MensajeError mensaje={error} />
+
+        <button type="submit" className="boton boton-primario" disabled={guardando}>
+          {guardando ? "GUARDANDO..." : "ACTUALIZAR"}
         </button>
-
-        <h2>ACTUALIZAR</h2>
-
-        <form onSubmit={manejarEnvio}>
-          <input name="url" type="text" defaultValue={miniatura.url} />
-
-          <label className="file-label">
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => setArchivo(e.target.files[0])}
-            />
-            📁 Cambiar miniatura
-          </label>
-
-          {archivo && <p className="file-name">{archivo.name}</p>}
-
-          <button type="submit">ACTUALIZAR</button>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }
 

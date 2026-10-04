@@ -2,51 +2,60 @@
 
 import { useState } from "react";
 
-function ModalMoverCategoria({
-  abierto,
-  categorias,
-  miniatura,
-  alCerrar,
-  alMoverCategoria,
-}) {
-  const [categoriaId, setCategoriaId] = useState(0);
+import Modal from "../comunes/Modal";
+import MensajeError from "../comunes/MensajeError";
 
-  if (!abierto || !miniatura) {
-    return null;
+function ModalMoverCategoria({ categorias, miniatura, alCerrar, alMoverCategoria }) {
+  const [categoriaId, setCategoriaId] = useState(miniatura.categoriaId);
+
+  const [guardando, setGuardando] = useState(false);
+
+  const [error, setError] = useState("");
+
+  async function manejarEnvio(evento) {
+    evento.preventDefault();
+
+    try {
+      setGuardando(true);
+
+      setError("");
+
+      await alMoverCategoria(miniatura.id, categoriaId);
+    } catch (err) {
+      setError(err.message);
+
+      setGuardando(false);
+    }
   }
 
   return (
-    <div className="modal-overlay" onClick={alCerrar}>
-      <div
-        className="update-modal mover-categoria-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="close-btn" onClick={alCerrar}>
-          ✕
-        </button>
-
-        <h2>MOVER A</h2>
-
+    <Modal titulo="MOVER A" className="modal-estrecho" alCerrar={alCerrar}>
+      <form className="formulario" onSubmit={manejarEnvio}>
         <select
-          className="mover-categoria-select"
+          aria-label="Categoría de destino"
           value={categoriaId}
+          autoFocus
           onChange={(evento) => setCategoriaId(Number(evento.target.value))}
         >
           {categorias.map((categoria) => (
             <option key={categoria.id} value={categoria.id}>
               {categoria.nombre}
+              {categoria.id === miniatura.categoriaId ? " (actual)" : ""}
             </option>
           ))}
         </select>
 
+        <MensajeError mensaje={error} />
+
         <button
-          className="mover-categoria-boton"
-          onClick={() => alMoverCategoria(miniatura.id, categoriaId)}
+          type="submit"
+          className="boton boton-primario"
+          disabled={guardando || categoriaId === miniatura.categoriaId}
         >
-          MOVER
+          {guardando ? "MOVIENDO..." : "MOVER"}
         </button>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }
 

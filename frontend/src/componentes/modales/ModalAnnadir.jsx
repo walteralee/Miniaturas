@@ -1,85 +1,112 @@
 import { useState } from "react";
 
+import Modal from "../comunes/Modal";
+import SelectorImagen from "../comunes/SelectorImagen";
+import MensajeError from "../comunes/MensajeError";
+
 import { crearMiniatura } from "../../servicios/miniaturas.servicio";
 
-function ModalAnnadir({ abierto, categoriaSeleccionada, alCerrar }) {
+import { esURLValida } from "../../utilidades/validacion.utilidades";
+
+import {
+  ID_SIN_CATEGORIA,
+  TODAS_LAS_CATEGORIAS,
+} from "../../constantes/api.constantes";
+
+function ModalAnnadir({ categorias, categoriaSeleccionada, alCerrar, alGuardar }) {
   const [url, setUrl] = useState("");
 
   const [archivo, setArchivo] = useState(null);
 
-  const [cargando, setCargando] = useState(false);
+  const [categoriaId, setCategoriaId] = useState(
+    categoriaSeleccionada === TODAS_LAS_CATEGORIAS
+      ? ID_SIN_CATEGORIA
+      : categoriaSeleccionada,
+  );
 
-  async function manejarEnvio(e) {
-    e.preventDefault();
+  const [guardando, setGuardando] = useState(false);
 
-    if (!url || !archivo) {
-      alert("FALTAN DATOS");
+  const [error, setError] = useState("");
+
+  async function manejarEnvio(evento) {
+    evento.preventDefault();
+
+    if (!esURLValida(url)) {
+      setError("Introduce un enlace válido (debe empezar por http:// o https://)");
 
       return;
     }
 
-    try {
-      setCargando(true);
+    const formData = new FormData();
 
-      const formData = new FormData();
+    formData.append("url", url.trim());
 
-      formData.append("url", url);
+    formData.append("categoriaId", categoriaId);
 
+    if (archivo) {
       formData.append("miniatura", archivo);
+    }
 
-      formData.append(
-        "categoriaId",
+    try {
+      setGuardando(true);
 
-        categoriaSeleccionada === -1 ? 0 : categoriaSeleccionada,
-      );
+      setError("");
 
-      await crearMiniatura(formData);
+      alGuardar(await crearMiniatura(formData));
+    } catch (err) {
+      setError(err.message);
 
-      window.location.reload();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setCargando(false);
+      setGuardando(false);
     }
   }
 
-  if (!abierto) {
-    return null;
-  }
-
   return (
-    <div className="modal-overlay" onClick={alCerrar}>
-      <div className="update-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={alCerrar}>
-          ✕
+    <Modal titulo="AÑADIR" alCerrar={alCerrar}>
+      <form className="formulario" onSubmit={manejarEnvio}>
+        <input
+          type="url"
+          placeholder="https://..."
+          aria-label="Enlace"
+          value={url}
+          autoFocus
+          onChange={(evento) => setUrl(evento.target.value)}
+        />
+
+        <select
+          aria-label="Categoría"
+          value={categoriaId}
+          onChange={(evento) => setCategoriaId(Number(evento.target.value))}
+        >
+          {categorias.map((categoria) => (
+            <option key={categoria.id} value={categoria.id}>
+              {categoria.nombre}
+            </option>
+          ))}
+        </select>
+
+        <SelectorImagen
+          archivo={archivo}
+          texto="Elegir miniatura (opcional)"
+          alCambiar={setArchivo}
+        />
+
+        {!archivo && (
+          <p className="ayuda">
+            Si no eliges imagen, se descargará automáticamente de la página.
+          </p>
+        )}
+
+        <MensajeError mensaje={error} />
+
+        <button type="submit" className="boton boton-primario" disabled={guardando}>
+          {guardando
+            ? archivo
+              ? "SUBIENDO..."
+              : "BUSCANDO MINIATURA..."
+            : "AÑADIR"}
         </button>
-
-        <h2>AÑADIR</h2>
-
-        <form onSubmit={manejarEnvio}>
-          <input
-            type="text"
-            placeholder="URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-
-          <label className="file-label">
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => setArchivo(e.target.files[0])}
-            />
-            📁 Seleccionar miniatura
-          </label>
-
-          {archivo && <p className="file-name">{archivo.name}</p>}
-
-          <button type="submit">{cargando ? "SUBIENDO..." : "AÑADIR"}</button>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }
 

@@ -5,55 +5,127 @@
 }
 
 body {
+  min-height: 100vh;
+
   background: var(--color-fondo);
   color: var(--color-texto);
-  font-family: Arial, sans-serif;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+}
+
+body.sin-scroll {
+  overflow: hidden;
 }
 
 a {
+  color: inherit;
   text-decoration: none;
 }
 
-.menu-contextual {
-  background: #111111;
-
-  border: 1px solid #1f1f1f;
-
-  border-radius: 14px;
-
-  overflow: hidden;
-
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-
-  z-index: 9999;
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
 }
 
-.menu-contextual button {
-  width: 180px;
+:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
 
-  height: 48px;
+/* ==================================================
+   BOTONES
+================================================== */
+
+.boton {
+  height: 46px;
+  padding: 0 20px;
 
   border: none;
-
-  background: transparent;
+  border-radius: var(--radio);
 
   color: white;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
 
   cursor: pointer;
-
-  text-align: left;
-
-  padding: 0 18px;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  transition: 0.2s;
+  transition:
+    background var(--transicion),
+    transform var(--transicion),
+    opacity var(--transicion);
 }
 
-.menu-contextual button:hover {
-  background: #1d4ed8;
+.boton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.boton-primario {
+  background: var(--color-primario);
+}
+
+.boton-primario:hover:not(:disabled) {
+  background: var(--color-primario-hover);
+}
+
+.boton-aviso {
+  background: var(--color-aviso);
+}
+
+.boton-aviso:hover:not(:disabled) {
+  background: var(--color-aviso-hover);
+}
+
+.boton-secundario {
+  background: #27272a;
+}
+
+.boton-secundario:hover:not(:disabled) {
+  background: #3f3f46;
+}
+
+.boton-peligro {
+  background: var(--color-peligro);
+}
+
+.boton-peligro:hover:not(:disabled) {
+  background: var(--color-peligro-hover);
+}
+
+/* ==================================================
+   MENSAJES
+================================================== */
+
+.mensaje-error {
+  padding: 12px 14px;
+
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: var(--radio);
+
+  background: rgba(153, 27, 27, 0.15);
+  color: var(--color-error);
+
+  font-size: 14px;
+}
+
+.ayuda {
+  color: var(--color-texto-suave);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 /* ==================================================
@@ -73,21 +145,6 @@ a {
 @media (max-width: 768px) {
   body {
     font-size: 14px;
-
     overflow-x: hidden;
-  }
-
-  .menu-contextual {
-    width: 170px;
-  }
-
-  .menu-contextual button {
-    width: 100%;
-
-    height: 46px;
-
-    font-size: 13px;
-
-    padding: 0 14px;
   }
 }

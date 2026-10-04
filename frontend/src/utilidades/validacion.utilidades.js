@@ -1,9 +1,17 @@
 export function esURLValida(url) {
   try {
-    new URL(url);
+    const { protocol } = new URL(url.trim());
 
-    return true;
+    return protocol === "http:" || protocol === "https:";
   } catch {
     return false;
+  }
+}
+
+export function obtenerDominio(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
   }
 }

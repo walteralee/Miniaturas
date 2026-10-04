@@ -1,19 +1,12 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL;
+// Rutas relativas: Vite las reenvía al backend (ver vite.config.js)
+export const API_MINIATURAS = "/api/miniaturas";
 
-export const API_RUTA_MINIATURAS =
-  "/api/miniaturas";
+export const API_CATEGORIAS = "/api/categorias";
 
-export const API_RUTA_CATEGORIAS =
-  "/api/categorias";
+export const MINIATURA_POR_DEFECTO = "/miniaturas/default.png";
 
-export const API_RUTA_IMAGENES =
-  "/miniaturas";
+export const ID_SIN_CATEGORIA = 0;
 
-export const API_MINIATURAS =
-  `${API_BASE_URL}${API_RUTA_MINIATURAS}`;
+export const TODAS_LAS_CATEGORIAS = -1;
 
-export const API_CATEGORIAS =
-  `${API_BASE_URL}${API_RUTA_CATEGORIAS}`;
-
-export const API_IMAGENES =
-  `${API_BASE_URL}${API_RUTA_IMAGENES}`;
+export const LONGITUD_MAXIMA_NOMBRE_CATEGORIA = 40;

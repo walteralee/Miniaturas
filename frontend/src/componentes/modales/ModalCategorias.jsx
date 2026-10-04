@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 
-import Entrada from "../comunes/Entrada";
-import Boton from "../comunes/Boton";
+import Modal from "../comunes/Modal";
+import MensajeError from "../comunes/MensajeError";
+
+import {
+  ID_SIN_CATEGORIA,
+  LONGITUD_MAXIMA_NOMBRE_CATEGORIA,
+} from "../../constantes/api.constantes";
 
 function ModalCategorias({
-  abierto,
   categorias,
+  conteo,
   alCerrar,
   alCrearCategoria,
   alRenombrarCategoria,
@@ -15,78 +20,208 @@ function ModalCategorias({
 }) {
   const [nombreNueva, setNombreNueva] = useState("");
 
-  if (!abierto) {
-    return null;
+  // { id, nombre } de la categoría que se está renombrando
+  const [edicion, setEdicion] = useState(null);
+
+  // id de la categoría pendiente de confirmar su borrado
+  const [borrando, setBorrando] = useState(null);
+
+  const [ocupado, setOcupado] = useState(false);
+
+  const [error, setError] = useState("");
+
+  async function ejecutar(accion) {
+    try {
+      setOcupado(true);
+
+      setError("");
+
+      await accion();
+
+      return true;
+    } catch (err) {
+      setError(err.message);
+
+      return false;
+    } finally {
+      setOcupado(false);
+    }
   }
 
+  async function crear(evento) {
+    evento.preventDefault();
+
+    const nombre = nombreNueva.trim();
+
+    if (!nombre) {
+      return;
+    }
+
+    if (await ejecutar(() => alCrearCategoria(nombre))) {
+      setNombreNueva("");
+    }
+  }
+
+  async function guardarEdicion(evento) {
+    evento.preventDefault();
+
+    const nombre = edicion.nombre.trim();
+
+    if (!nombre) {
+      return;
+    }
+
+    if (await ejecutar(() => alRenombrarCategoria(edicion.id, nombre))) {
+      setEdicion(null);
+    }
+  }
+
+  async function eliminar(id) {
+    if (await ejecutar(() => alEliminarCategoria(id))) {
+      setBorrando(null);
+    }
+  }
+
+  const editables = categorias.filter(
+    (categoria) => categoria.id !== ID_SIN_CATEGORIA,
+  );
+
   return (
-    <div className="modal-overlay" onClick={alCerrar}>
-      <div
-        className="update-modal categorias-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="close-btn" onClick={alCerrar}>
-          ✕
-        </button>
+    <Modal titulo="GESTIONAR CATEGORÍAS" className="modal-ancho" alCerrar={alCerrar}>
+      <div className="categorias-lista">
+        {editables.length === 0 && (
+          <p className="ayuda">Todavía no has creado ninguna categoría.</p>
+        )}
 
-        <h2>GESTIONAR CATEGORÍAS</h2>
-
-        <div className="categorias-lista">
-          {categorias
-            .filter((categoria) => categoria.id !== 0)
-            .map((categoria) => (
-              <div key={categoria.id} className="categoria-item">
-                <span>{categoria.nombre}</span>
+        {editables.map((categoria) => {
+          if (edicion?.id === categoria.id) {
+            return (
+              <form
+                key={categoria.id}
+                className="categoria-item"
+                onSubmit={guardarEdicion}
+              >
+                <input
+                  type="text"
+                  aria-label="Nuevo nombre"
+                  value={edicion.nombre}
+                  maxLength={LONGITUD_MAXIMA_NOMBRE_CATEGORIA}
+                  autoFocus
+                  onChange={(evento) =>
+                    setEdicion({ ...edicion, nombre: evento.target.value })
+                  }
+                />
 
                 <div className="categoria-acciones">
-                  <Boton
-                    onClick={() => {
-                      const nombre = prompt("Nuevo nombre:", categoria.nombre);
+                  <button type="submit" className="boton boton-primario" disabled={ocupado}>
+                    GUARDAR
+                  </button>
 
-                      if (nombre && nombre.trim()) {
-                        alRenombrarCategoria(categoria.id, nombre);
-                      }
-                    }}
+                  <button
+                    type="button"
+                    className="boton boton-secundario"
+                    onClick={() => setEdicion(null)}
                   >
-                    RENOMBRAR
-                  </Boton>
+                    CANCELAR
+                  </button>
+                </div>
+              </form>
+            );
+          }
 
-                  <Boton onClick={() => alEliminarCategoria(categoria.id)}>
+          if (borrando === categoria.id) {
+            const cantidad = conteo[categoria.id] ?? 0;
+
+            return (
+              <div key={categoria.id} className="categoria-item categoria-item-peligro">
+                <span>
+                  ¿Eliminar «{categoria.nombre}»?
+                  {cantidad > 0 &&
+                    ` Sus ${cantidad} miniaturas pasarán a "Sin categoría".`}
+                </span>
+
+                <div className="categoria-acciones">
+                  <button
+                    type="button"
+                    className="boton boton-peligro"
+                    disabled={ocupado}
+                    onClick={() => eliminar(categoria.id)}
+                  >
                     ELIMINAR
-                  </Boton>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="boton boton-secundario"
+                    onClick={() => setBorrando(null)}
+                  >
+                    CANCELAR
+                  </button>
                 </div>
               </div>
-            ))}
-        </div>
+            );
+          }
 
-        <hr />
+          return (
+            <div key={categoria.id} className="categoria-item">
+              <span>
+                {categoria.nombre}
+                <small> · {conteo[categoria.id] ?? 0}</small>
+              </span>
 
-        <div className="categoria-crear">
-          <Entrada
-            className="categoria-input"
-            placeholder="Nombre de la nueva categoría"
-            value={nombreNueva}
-            onChange={(evento) => setNombreNueva(evento.target.value)}
-          />
-        </div>
+              <div className="categoria-acciones">
+                <button
+                  type="button"
+                  className="boton boton-secundario"
+                  onClick={() => {
+                    setBorrando(null);
 
-        <Boton
-          onClick={() => {
-            const nombre = nombreNueva.trim();
+                    setEdicion({ id: categoria.id, nombre: categoria.nombre });
+                  }}
+                >
+                  RENOMBRAR
+                </button>
 
-            if (!nombre) {
-              return;
-            }
+                <button
+                  type="button"
+                  className="boton boton-peligro"
+                  onClick={() => {
+                    setEdicion(null);
 
-            alCrearCategoria(nombre);
+                    setBorrando(categoria.id);
+                  }}
+                >
+                  ELIMINAR
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-            setNombreNueva("");
-          }}
+      <hr />
+
+      <form className="formulario" onSubmit={crear}>
+        <input
+          type="text"
+          placeholder="Nombre de la nueva categoría"
+          aria-label="Nombre de la nueva categoría"
+          value={nombreNueva}
+          maxLength={LONGITUD_MAXIMA_NOMBRE_CATEGORIA}
+          onChange={(evento) => setNombreNueva(evento.target.value)}
+        />
+
+        <MensajeError mensaje={error} />
+
+        <button
+          type="submit"
+          className="boton boton-primario"
+          disabled={ocupado || !nombreNueva.trim()}
         >
           CREAR CATEGORÍA
-        </Boton>
-      </div>
-    </div>
+        </button>
+      </form>
+    </Modal>
   );
 }
 
