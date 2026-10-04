@@ -47,6 +47,22 @@ frontend/.env
 .env.production
 
 # ==================================================
+# PYTHON
+# ==================================================
+
+__pycache__/
+
+# ==================================================
+# BASE DE DATOS (archivos temporales de SQLite)
+# ==================================================
+
+almacenamiento/datos/*.db-journal
+
+almacenamiento/datos/*.db-wal
+
+almacenamiento/datos/*.db-shm
+
+# ==================================================
 # MINIATURAS DINAMICAS
 # ==================================================
 

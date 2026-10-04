@@ -1,0 +1,3 @@
+export const ID_SIN_CATEGORIA = 0;
+
+export const LONGITUD_MAXIMA_NOMBRE_CATEGORIA = 40;

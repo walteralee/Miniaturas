@@ -1,7 +1,9 @@
 function Cargador() {
   return (
-    <div className="loading">
-      <h1>Cargando...</h1>
+    <div className="pantalla-centrada" role="status">
+      <div className="cargador" />
+
+      <p>Cargando...</p>
     </div>
   );
 }

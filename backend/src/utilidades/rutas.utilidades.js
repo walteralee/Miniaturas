@@ -1,15 +1,27 @@
 import path from "path";
 
-export function obtenerRutaMiniaturas() {
-  return path.join(process.cwd(), "..", "almacenamiento", "miniaturas");
-}
+import { fileURLToPath } from "url";
 
-export function obtenerRutaDB() {
-  return path.join(
-    process.cwd(),
-    "..",
-    "almacenamiento",
-    "datos",
-    "miniaturas.db",
-  );
-}
+// Raíz del proyecto (carpeta que contiene backend/, frontend/, scripts/...)
+const RAIZ = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "..",
+);
+
+// ALMACENAMIENTO_DIR permite apuntar a otra carpeta de datos (p. ej. pruebas)
+const ALMACENAMIENTO =
+  process.env.ALMACENAMIENTO_DIR || path.join(RAIZ, "almacenamiento");
+
+export const RUTAS = {
+  raiz: RAIZ,
+
+  config: path.join(RAIZ, "config.env"),
+
+  baseDatos: path.join(ALMACENAMIENTO, "datos", "miniaturas.db"),
+
+  miniaturas: path.join(ALMACENAMIENTO, "miniaturas"),
+
+  scraping: path.join(RAIZ, "scripts", "scraping.py"),
+};

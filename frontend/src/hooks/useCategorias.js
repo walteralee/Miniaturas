@@ -1,6 +1,6 @@
 // src/hooks/useCategorias.js
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { obtenerCategorias } from "../servicios/categorias.servicio";
 
@@ -11,37 +11,38 @@ export function useCategorias() {
 
   const [error, setError] = useState(null);
 
-  async function cargarCategorias() {
+  const recargarCategorias = useCallback(async () => {
     try {
-      setCargando(true);
-
       const datos = await obtenerCategorias();
 
       setCategorias(datos);
 
       setError(null);
-    } catch (error) {
-      setError(error);
+    } catch (err) {
+      setError(err);
     } finally {
       setCargando(false);
     }
-  }
+  }, []);
 
+  // Carga inicial (ignora la respuesta si el componente ya se desmontó)
   useEffect(() => {
-    async function inicializar() {
-      await cargarCategorias();
-    }
+    let activo = true;
 
-    inicializar();
+    obtenerCategorias()
+      .then((datos) => activo && setCategorias(datos))
+      .catch((err) => activo && setError(err))
+      .finally(() => activo && setCargando(false));
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   return {
     categorias,
-
     cargando,
-
     error,
-
-    recargarCategorias: cargarCategorias,
+    recargarCategorias,
   };
 }

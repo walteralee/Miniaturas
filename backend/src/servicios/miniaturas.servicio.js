@@ -1,176 +1,132 @@
 // backend/src/servicios/miniaturas.servicio.js
 
-import fs from "fs";
-
-import path from "path";
-
 import {
   obtenerMiniaturasRepositorio,
   obtenerMiniaturaPorIdRepositorio,
   crearMiniaturaRepositorio,
-  guardarMiniaturasRepositorio,
+  actualizarMiniaturaRepositorio,
   moverMiniaturaCategoriaRepositorio,
   eliminarMiniaturaRepositorio,
 } from "../repositorios/miniaturas.repositorio.js";
 
 import { obtenerCategoriaPorIdRepositorio } from "../repositorios/categorias.repositorio.js";
 
-import { generarID } from "../utilidades/identificadores.utilidades.js";
+import { guardarImagen, eliminarImagen } from "./archivos.servicio.js";
 
-import { eliminarArchivo } from "../utilidades/archivos.utilidades.js";
+import { descargarMiniaturaScraping } from "./scraping.servicio.js";
 
-import { validarMiniatura } from "../validadores/miniaturas.validador.js";
+import { validarUrl, validarId } from "../validadores/miniaturas.validador.js";
+
+import { ID_SIN_CATEGORIA } from "../constantes/categorias.constantes.js";
+
+import { MINIATURA_POR_DEFECTO } from "../constantes/miniaturas.constantes.js";
 
 import { ValidacionError } from "../errores/validacion.error.js";
+
+import { NoEncontradoError } from "../errores/no-encontrado.error.js";
+
+function obtenerMiniaturaExistente(id) {
+  const miniatura = obtenerMiniaturaPorIdRepositorio(validarId(id));
+
+  if (!miniatura) {
+    throw new NoEncontradoError("Miniatura no encontrada");
+  }
+
+  return miniatura;
+}
+
+function validarCategoriaExistente(categoriaId) {
+  const id = validarId(categoriaId ?? ID_SIN_CATEGORIA, "id de categoría");
+
+  if (!obtenerCategoriaPorIdRepositorio(id)) {
+    throw new ValidacionError("Categoría no encontrada");
+  }
+
+  return id;
+}
+
+// Sin imagen subida: se busca automáticamente en la página del enlace
+async function descargarImagenAutomatica(id) {
+  await descargarMiniaturaScraping(id);
+
+  return obtenerMiniaturaPorIdRepositorio(id);
+}
 
 export function obtenerMiniaturasServicio() {
   return obtenerMiniaturasRepositorio();
 }
 
-export function crearMiniaturaServicio(datos) {
-  validarMiniatura(datos);
+export async function crearMiniaturaServicio({ url, archivo, categoriaId }) {
+  const urlLimpia = validarUrl(url);
 
-  const miniaturas = obtenerMiniaturasRepositorio();
+  const idCategoria = validarCategoriaExistente(categoriaId);
 
-  const id = generarID(miniaturas);
+  const miniatura = crearMiniaturaRepositorio({
+    url: urlLimpia,
 
-  const extension = path.extname(datos.miniatura);
+    miniatura: MINIATURA_POR_DEFECTO,
 
-  const nombreFinal = `${id}${extension}`;
+    categoriaId: idCategoria,
+  });
 
-  const rutaTemporal = path.join(
-    process.cwd(),
-    "..",
-    "almacenamiento",
-    "miniaturas",
-    path.basename(datos.miniatura),
-  );
+  if (!archivo) {
+    return descargarImagenAutomatica(miniatura.id);
+  }
 
-  const rutaFinal = path.join(
-    process.cwd(),
-    "..",
-    "almacenamiento",
-    "miniaturas",
-    nombreFinal,
-  );
+  try {
+    return actualizarMiniaturaRepositorio(miniatura.id, {
+      url: urlLimpia,
 
-  fs.renameSync(rutaTemporal, rutaFinal);
+      miniatura: guardarImagen(miniatura.id, archivo),
+    });
+  } catch (error) {
+    eliminarMiniaturaRepositorio(miniatura.id);
 
-  const nuevaMiniatura = {
-    id,
-
-    url: datos.url,
-
-    miniatura: `/miniaturas/${nombreFinal}`,
-
-    categoriaId: datos.categoriaId ?? 0,
-  };
-
-  return crearMiniaturaRepositorio(nuevaMiniatura);
+    throw error;
+  }
 }
 
-export function eliminarMiniaturaServicio(id) {
-  const miniaturas = obtenerMiniaturasRepositorio();
+export async function actualizarMiniaturaServicio(id, { url, archivo }) {
+  const actual = obtenerMiniaturaExistente(id);
 
-  const miniatura = miniaturas.find(
-    (miniatura) => String(miniatura.id) === String(id),
-  );
+  const urlLimpia = validarUrl(url);
 
-  if (!miniatura) {
-    throw new ValidacionError("Miniatura no encontrada");
+  if (archivo) {
+    return actualizarMiniaturaRepositorio(actual.id, {
+      url: urlLimpia,
+
+      miniatura: guardarImagen(actual.id, archivo),
+    });
   }
 
-  if (miniatura.miniatura) {
-    const rutaArchivo = path.join(
-      process.cwd(),
-      "..",
-      "almacenamiento",
-      "miniaturas",
-      path.basename(miniatura.miniatura),
-    );
-
-    eliminarArchivo(rutaArchivo);
+  if (urlLimpia === actual.url) {
+    return actual;
   }
 
-  eliminarMiniaturaRepositorio(id);
-}
+  // Enlace nuevo sin imagen nueva: la imagen antigua ya no corresponde
+  eliminarImagen(actual.miniatura);
 
-export function actualizarMiniaturaServicio(id, datos) {
-  validarMiniatura(datos);
+  actualizarMiniaturaRepositorio(actual.id, {
+    url: urlLimpia,
 
-  const miniaturas = obtenerMiniaturasRepositorio();
+    miniatura: MINIATURA_POR_DEFECTO,
+  });
 
-  const indice = miniaturas.findIndex(
-    (miniatura) => String(miniatura.id) === String(id),
-  );
-
-  if (indice === -1) {
-    throw new ValidacionError("Miniatura no encontrada");
-  }
-
-  let nuevaRutaMiniatura = miniaturas[indice].miniatura;
-
-  if (datos.miniatura) {
-    const rutaAnterior = path.join(
-      process.cwd(),
-      "..",
-      "almacenamiento",
-      "miniaturas",
-      path.basename(miniaturas[indice].miniatura),
-    );
-
-    eliminarArchivo(rutaAnterior);
-
-    const extension = path.extname(datos.miniatura);
-
-    const nombreFinal = `${id}${extension}`;
-
-    const rutaTemporal = path.join(
-      process.cwd(),
-      "..",
-      "almacenamiento",
-      "miniaturas",
-      path.basename(datos.miniatura),
-    );
-
-    const rutaFinal = path.join(
-      process.cwd(),
-      "..",
-      "almacenamiento",
-      "miniaturas",
-      nombreFinal,
-    );
-
-    fs.renameSync(rutaTemporal, rutaFinal);
-
-    nuevaRutaMiniatura = `/miniaturas/${nombreFinal}`;
-  }
-
-  miniaturas[indice] = {
-    ...miniaturas[indice],
-
-    url: datos.url,
-
-    miniatura: nuevaRutaMiniatura,
-  };
-
-  guardarMiniaturasRepositorio(miniaturas);
-
-  return miniaturas[indice];
+  return descargarImagenAutomatica(actual.id);
 }
 
 export function moverMiniaturaCategoriaServicio(id, categoriaId) {
-  const miniatura = obtenerMiniaturaPorIdRepositorio(id);
+  const miniatura = obtenerMiniaturaExistente(id);
 
-  if (!miniatura) {
-    throw new ValidacionError("Miniatura no encontrada");
-  }
+  const idCategoria = validarCategoriaExistente(categoriaId);
 
-  const categoria = obtenerCategoriaPorIdRepositorio(categoriaId);
+  return moverMiniaturaCategoriaRepositorio(miniatura.id, idCategoria);
+}
 
-  if (!categoria) {
-    throw new ValidacionError("Categoría no encontrada");
-  }
+export function eliminarMiniaturaServicio(id) {
+  const miniatura = obtenerMiniaturaExistente(id);
 
-  return moverMiniaturaCategoriaRepositorio(id, categoriaId);
+  eliminarMiniaturaRepositorio(miniatura.id);
+
+  eliminarImagen(miniatura.miniatura);
 }

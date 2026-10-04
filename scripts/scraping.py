@@ -1,32 +1,44 @@
+"""
+Descarga las miniaturas a partir de la imagen de vista previa (og:image)
+de cada enlace guardado.
+
+Uso:
+    python scripts/scraping.py          Revisa todas y descarga las que faltan
+    python scripts/scraping.py --id 5   Fuerza la descarga de una (lo usa el backend)
+"""
+
+import argparse
 import os
 import sqlite3
+import sys
+
+from urllib.parse import urljoin, urlparse
+
 import requests
 
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 
 # =========================================================
 # CONFIGURACION
 # =========================================================
 
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
+RAIZ = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
 )
 
-DB_FILE = os.path.join(
-    BASE_DIR,
-    "..",
-    "almacenamiento",
-    "datos",
-    "miniaturas.db"
+# ALMACENAMIENTO_DIR permite apuntar a otra carpeta de datos (igual que el backend)
+ALMACENAMIENTO = (
+    os.environ.get("ALMACENAMIENTO_DIR")
+    or os.path.join(RAIZ, "almacenamiento")
 )
 
-MINIATURAS_DIR = os.path.join(
-    BASE_DIR,
-    "..",
-    "almacenamiento",
-    "miniaturas"
-)
+DB_FILE = os.path.join(ALMACENAMIENTO, "datos", "miniaturas.db")
+
+MINIATURAS_DIR = os.path.join(ALMACENAMIENTO, "miniaturas")
+
+MINIATURA_POR_DEFECTO = "/miniaturas/default.png"
 
 TIMEOUT = 20
 
@@ -40,122 +52,47 @@ HEADERS = {
     )
 }
 
-EXTENSIONES = [
-    "jpg",
-    "jpeg",
-    "png",
-    "webp",
-    "avif",
-    "gif"
-]
+EXTENSIONES_POR_TIPO = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif",
+}
+
+EXTENSIONES = ["jpg", "jpeg", "png", "webp", "avif", "gif"]
+
+# Estas webs no ofrecen imagen de vista previa sin iniciar sesion
+DOMINIOS_IGNORADOS = ["x.com", "twitter.com"]
 
 # =========================================================
-# OBTENER HTML
+# UTILIDADES
 # =========================================================
 
-def obtener_html(url):
+def es_dominio_ignorado(url):
 
-    response = requests.get(
-        url,
-        headers=HEADERS,
-        timeout=TIMEOUT
+    host = (urlparse(url).hostname or "").lower()
+
+    return any(
+        host == dominio or host.endswith("." + dominio)
+        for dominio in DOMINIOS_IGNORADOS
     )
 
-    response.raise_for_status()
 
-    return response.text
+def existe_imagen(ruta_publica):
 
-# =========================================================
-# OBTENER MINIATURA
-# =========================================================
-
-def obtener_miniatura(html):
-
-    soup = BeautifulSoup(
-        html,
-        "html.parser"
-    )
-
-    meta = soup.find(
-        "meta",
-        property="og:image"
-    )
-
-    if not meta:
-        return None
-
-    return meta.get("content")
-
-# =========================================================
-# OBTENER EXTENSION
-# =========================================================
-
-def obtener_extension(url):
-
-    parsed = urlparse(url)
-
-    path = parsed.path.lower()
-
-    for ext in EXTENSIONES:
-
-        if path.endswith(ext):
-
-            return ext
-
-    return "jpg"
-
-# =========================================================
-# DESCARGAR IMAGEN
-# =========================================================
-
-def descargar_imagen(url, destino):
-
-    response = requests.get(
-        url,
-        headers=HEADERS,
-        timeout=TIMEOUT,
-        stream=True
-    )
-
-    response.raise_for_status()
-
-    with open(destino, "wb") as archivo:
-
-        for chunk in response.iter_content(8192):
-
-            archivo.write(chunk)
-
-# =========================================================
-# EXISTE RUTA EXACTA
-# =========================================================
-
-def existe_ruta_exacta(ruta_miniatura):
-
-    if not ruta_miniatura:
+    if not ruta_publica or ruta_publica == MINIATURA_POR_DEFECTO:
 
         return False
 
-    ruta_relativa = ruta_miniatura.lstrip("/\\")
-
-    ruta_completa = os.path.join(
-        BASE_DIR,
-        "..",
-        ruta_relativa.replace("/", os.sep)
+    return os.path.exists(
+        os.path.join(MINIATURAS_DIR, os.path.basename(ruta_publica))
     )
 
-    return os.path.exists(ruta_completa)
 
-# =========================================================
-# BUSCAR MINIATURA POR ID
-# =========================================================
-
-def buscar_miniatura_por_id(id_miniatura):
+def buscar_imagen_por_id(id_miniatura):
 
     for archivo in os.listdir(MINIATURAS_DIR):
-
-        if archivo == "default.png":
-
-            continue
 
         nombre, _ = os.path.splitext(archivo)
 
@@ -165,296 +102,241 @@ def buscar_miniatura_por_id(id_miniatura):
 
     return None
 
+
+def eliminar_imagenes_de_id(id_miniatura):
+
+    for archivo in os.listdir(MINIATURAS_DIR):
+
+        nombre, _ = os.path.splitext(archivo)
+
+        if nombre == str(id_miniatura):
+
+            os.remove(os.path.join(MINIATURAS_DIR, archivo))
+
 # =========================================================
-# CREAR CARPETA
-# =========================================================
-
-if not os.path.exists(MINIATURAS_DIR):
-
-    os.makedirs(MINIATURAS_DIR)
-
-# =========================================================
-# CARGAR SQLITE
-# =========================================================
-
-if not os.path.exists(DB_FILE):
-
-    print(f"No existe: {DB_FILE}")
-
-    exit()
-
-try:
-
-    conexion = sqlite3.connect(DB_FILE)
-
-    cursor = conexion.cursor()
-
-    cursor.execute("""
-        SELECT
-            id,
-            url,
-            miniatura,
-            categoriaId
-        FROM miniaturas
-        ORDER BY id
-    """)
-
-    filas = cursor.fetchall()
-
-    miniaturas = []
-
-    for fila in filas:
-
-        miniaturas.append({
-            "id": fila[0],
-            "url": fila[1],
-            "miniatura": fila[2],
-            "categoriaId": fila[3]
-        })
-
-    conexion.close()
-
-except Exception as e:
-
-    print(f"ERROR SQLITE: {e}")
-
-    exit()
-    
-# =========================================================
-# DESCARGAR MINIATURAS
+# SCRAPING
 # =========================================================
 
-errores = []
+def obtener_url_miniatura(url):
 
-ids_usados = set()
+    response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
 
-for miniatura in miniaturas:
+    response.raise_for_status()
 
-    try:
+    soup = BeautifulSoup(response.text, "html.parser")
 
-        # =================================================
-        # VALIDAR
-        # =================================================
+    etiqueta = (
+        soup.find("meta", property="og:image")
+        or soup.find("meta", attrs={"name": "twitter:image"})
+    )
 
-        if not isinstance(miniatura, dict):
+    if not etiqueta or not etiqueta.get("content"):
 
-            continue
+        return None
 
-        if "id" not in miniatura:
+    # Algunas webs usan rutas relativas
+    return urljoin(response.url, etiqueta["content"].strip())
 
-            continue
 
-        if "url" not in miniatura:
+def obtener_extension(url_imagen, tipo_contenido):
 
-            continue
+    tipo = (tipo_contenido or "").split(";")[0].strip().lower()
 
-        id_miniatura = str(
-            miniatura["id"]
-        ).strip()
+    if tipo in EXTENSIONES_POR_TIPO:
 
-        url = str(
-            miniatura["url"]
-        ).strip()
+        return EXTENSIONES_POR_TIPO[tipo]
 
-        ruta_miniatura = str(
-            miniatura.get(
-                "miniatura",
-                ""
-            )
-        ).strip()
+    ruta = urlparse(url_imagen).path.lower()
 
-        if ruta_miniatura == "/miniaturas/default.png":
+    for extension in EXTENSIONES:
 
-            ruta_miniatura = ""
+        if ruta.endswith("." + extension):
 
-        if id_miniatura == "":
+            return "jpg" if extension == "jpeg" else extension
 
-            continue
+    return "jpg"
 
-        # =================================================
-        # ID DUPLICADA
-        # =================================================
 
-        if id_miniatura in ids_usados:
+def descargar_imagen(id_miniatura, url_imagen):
 
-            print(f"[{id_miniatura}] ID DUPLICADA")
+    response = requests.get(
+        url_imagen,
+        headers=HEADERS,
+        timeout=TIMEOUT,
+        stream=True
+    )
 
-            continue
+    response.raise_for_status()
 
-        ids_usados.add(id_miniatura)
+    tipo_contenido = response.headers.get("Content-Type", "")
 
-        # =================================================
-        # IGNORAR X/TWITTER
-        # =================================================
+    if tipo_contenido and not tipo_contenido.startswith("image/"):
 
-        if (
-            "x.com/" in url
-            or
-            "twitter.com/" in url
-        ):
+        raise ValueError(f"no es una imagen ({tipo_contenido})")
 
-            continue
+    extension = obtener_extension(url_imagen, tipo_contenido)
 
-        # =================================================
-        # RUTA EXACTA
-        # =================================================
+    eliminar_imagenes_de_id(id_miniatura)
 
-        if (
-            ruta_miniatura
-            and
-            existe_ruta_exacta(ruta_miniatura)
-        ):
+    nombre = f"{id_miniatura}.{extension}"
+
+    with open(os.path.join(MINIATURAS_DIR, nombre), "wb") as archivo:
+
+        for bloque in response.iter_content(8192):
+
+            archivo.write(bloque)
+
+    return f"/miniaturas/{nombre}"
+
+# =========================================================
+# PROCESAR UNA MINIATURA
+# =========================================================
+
+def procesar(miniatura, forzar):
+    """Devuelve la nueva ruta de la imagen, o None si no cambia."""
+
+    id_miniatura = miniatura["id"]
+
+    ruta_actual = miniatura["miniatura"]
+
+    if not forzar:
+
+        if existe_imagen(ruta_actual):
 
             print(f"[{id_miniatura}] YA EXISTE")
 
-            continue
+            return None
 
-        # =================================================
-        # BUSCAR MISMO ID
-        # =================================================
+        archivo = buscar_imagen_por_id(id_miniatura)
 
-        archivo_existente = buscar_miniatura_por_id(
-            id_miniatura
-        )
+        if archivo:
 
-        if archivo_existente:
+            print(f"[{id_miniatura}] RUTA CORREGIDA -> {archivo}")
 
-            miniatura["miniatura"] = (
-                f"/miniaturas/{archivo_existente}"
-            )
+            return f"/miniaturas/{archivo}"
 
-            print(
-                f"[{id_miniatura}] "
-                f"RUTA CORREGIDA -> "
-                f"{archivo_existente}"
-            )
+    if es_dominio_ignorado(miniatura["url"]):
 
-            continue
+        print(f"[{id_miniatura}] IGNORADA (sin vista previa publica)")
 
-        # =================================================
-        # DESCARGAR HTML
-        # =================================================
+        return MINIATURA_POR_DEFECTO
 
-        print(f"[{id_miniatura}] DESCARGANDO...")
+    print(f"[{id_miniatura}] DESCARGANDO...")
 
-        html = obtener_html(url)
+    url_imagen = obtener_url_miniatura(miniatura["url"])
 
-        # =================================================
-        # EXTRAER MINIATURA
-        # =================================================
+    if not url_imagen:
 
-        url_miniatura = obtener_miniatura(html)
+        raise ValueError("la pagina no tiene imagen de vista previa")
 
-        if not url_miniatura:
+    ruta = descargar_imagen(id_miniatura, url_imagen)
 
-            print(f"[{id_miniatura}] SIN MINIATURA")
+    print(f"[{id_miniatura}] OK")
 
-            errores.append(id_miniatura)
-
-            continue
-
-        # =================================================
-        # EXTENSION
-        # =================================================
-
-        extension = obtener_extension(
-            url_miniatura
-        )
-
-        # =================================================
-        # DESTINO
-        # =================================================
-
-        destino = os.path.join(
-            MINIATURAS_DIR,
-            f"{id_miniatura}.{extension}"
-        )
-
-        # =================================================
-        # DESCARGAR
-        # =================================================
-
-        descargar_imagen(
-            url_miniatura,
-            destino
-        )
-
-        miniatura["miniatura"] = (
-            f"/miniaturas/{id_miniatura}.{extension}"
-        )
-
-        print(f"[{id_miniatura}] OK")
-
-    except Exception as e:
-
-        print(f"[{id_miniatura}] ERROR: {e}")
-
-        errores.append(id_miniatura)
+    return ruta
 
 # =========================================================
-# DEFAULT.PNG
+# PRINCIPAL
 # =========================================================
 
-for id_error in errores:
+def main():
 
-    for miniatura in miniaturas:
+    # La consola de Windows no siempre usa UTF-8
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-        if str(
-            miniatura.get("id")
-        ) == str(id_error):
+    parser = argparse.ArgumentParser(description="Descarga miniaturas")
 
-            miniatura["miniatura"] = (
-                "/miniaturas/default.png"
-            )
+    parser.add_argument("--id", type=int, help="descargar solo esta miniatura")
 
-# =========================================================
-# GUARDAR SQLITE
-# =========================================================
+    argumentos = parser.parse_args()
 
-try:
+    if not os.path.exists(DB_FILE):
 
-    conexion = sqlite3.connect(DB_FILE)
+        print(f"No existe la base de datos: {DB_FILE}")
 
-    cursor = conexion.cursor()
+        print("Se creara al iniciar el backend por primera vez.")
 
-    for miniatura in miniaturas:
+        return 0
 
-        cursor.execute(
-            """
-            UPDATE miniaturas
-            SET miniatura = ?
-            WHERE id = ?
-            """,
-            (
-                miniatura["miniatura"],
-                miniatura["id"]
-            )
-        )
+    os.makedirs(MINIATURAS_DIR, exist_ok=True)
 
-    conexion.commit()
+    conexion = sqlite3.connect(DB_FILE, timeout=10)
 
-    conexion.close()
+    conexion.row_factory = sqlite3.Row
 
-except Exception as e:
+    errores = []
 
-    print(f"ERROR SQLITE: {e}")
+    try:
 
-# =========================================================
-# RESUMEN
-# =========================================================
+        if argumentos.id is not None:
 
-print("\n===================================")
-print("FINALIZADO")
-print("===================================")
+            filas = conexion.execute(
+                "SELECT id, url, miniatura FROM miniaturas WHERE id = ?",
+                (argumentos.id,)
+            ).fetchall()
 
-if errores:
+        else:
 
-    print("\nERRORES:\n")
+            filas = conexion.execute(
+                "SELECT id, url, miniatura FROM miniaturas ORDER BY id"
+            ).fetchall()
 
-    for error in errores:
+        for fila in filas:
 
-        print(f"- {error}")
+            miniatura = dict(fila)
 
-else:
+            try:
+
+                nueva_ruta = procesar(miniatura, argumentos.id is not None)
+
+            except Exception as error:
+
+                print(f"[{miniatura['id']}] ERROR: {error}")
+
+                errores.append(miniatura["id"])
+
+                nueva_ruta = (
+                    None if existe_imagen(miniatura["miniatura"])
+                    else MINIATURA_POR_DEFECTO
+                )
+
+            # Solo se escribe lo que cambia
+            if nueva_ruta and nueva_ruta != miniatura["miniatura"]:
+
+                conexion.execute(
+                    "UPDATE miniaturas SET miniatura = ? WHERE id = ?",
+                    (nueva_ruta, miniatura["id"])
+                )
+
+                conexion.commit()
+
+    finally:
+
+        conexion.close()
+
+    # =====================================================
+    # RESUMEN
+    # =====================================================
+
+    print("\n===================================")
+    print("FINALIZADO")
+    print("===================================")
+
+    if errores:
+
+        print("\nERRORES (se usa la imagen por defecto):\n")
+
+        for error in errores:
+
+            print(f"- {error}")
+
+        return 1
 
     print("\nSIN ERRORES")
+
+    return 0
+
+
+if __name__ == "__main__":
+
+    sys.exit(main())

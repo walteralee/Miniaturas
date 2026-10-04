@@ -1,7 +1,28 @@
 :root {
-  --color-fondo: #181818;
-  --color-superficie: #202020;
+  color-scheme: dark;
+
+  --color-fondo: #0d0d0d;
+  --color-barra: rgba(10, 10, 10, 0.85);
+  --color-superficie: #111111;
+  --color-superficie-2: #171717;
+  --color-superficie-3: #1f1f1f;
+  --color-borde: #262626;
+  --color-borde-fuerte: #3a3a3a;
+
   --color-texto: #ffffff;
-  --color-borde: #303030;
-  --color-hover: #383838;
+  --color-texto-suave: #8a8a8a;
+
+  --color-primario: #2563eb;
+  --color-primario-hover: #1d4ed8;
+  --color-aviso: #f59e0b;
+  --color-aviso-hover: #d97706;
+  --color-peligro: #991b1b;
+  --color-peligro-hover: #b91c1c;
+  --color-error: #f87171;
+
+  --radio: 12px;
+  --radio-grande: 20px;
+  --alto-control: 52px;
+  --transicion: 0.2s ease;
+  --sombra: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
