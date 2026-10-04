@@ -7,11 +7,14 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js"
   },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "multer": "^2.1.1"
-  },
-  "private": true
+  }
 }

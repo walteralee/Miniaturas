@@ -1,13 +1,14 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+rem ================================================
+rem Miniaturas - arranque en Windows
+rem Uso: run.bat [local^|red]
+rem ================================================
+
+setlocal EnableExtensions
 
 cd /d "%~dp0"
 
 title Miniaturas
-
-rem ================================================
-rem CONFIGURACION (.env opcional)
-rem ================================================
 
 set "FRONTEND_PORT=5173"
 set "BACKEND_PORT=3000"
@@ -24,23 +25,34 @@ rem ================================================
 
 where node >nul 2>nul
 if errorlevel 1 (
-    echo.
-    echo [ERROR] No se encuentra Node.js. Instalalo desde https://nodejs.org
-    pause
-    exit /b 1
+    set "MENSAJE=No se encuentra Node.js. Instala la version 20 o superior desde https://nodejs.org"
+    goto error
 )
 
-where python >nul 2>nul
+node scripts\arranque.mjs version
 if errorlevel 1 (
-    echo.
-    echo [ERROR] No se encuentra Python 3. Instalalo desde https://www.python.org
-    pause
-    exit /b 1
+    set "MENSAJE=Actualiza Node.js desde https://nodejs.org"
+    goto error
+)
+
+set "PY="
+python -c "import sys; sys.exit(sys.version_info < (3, 10))" >nul 2>nul && set "PY=python"
+if not defined PY (
+    py -3 -c "import sys; sys.exit(sys.version_info < (3, 10))" >nul 2>nul && set "PY=py -3"
+)
+if not defined PY (
+    set "MENSAJE=No se encuentra Python 3.10 o superior. Instalalo desde https://www.python.org"
+    goto error
 )
 
 rem ================================================
 rem MODO
 rem ================================================
+
+set "MODO=%~1"
+
+if /i "%MODO%"=="local" goto modo_elegido
+if /i "%MODO%"=="red" goto modo_elegido
 
 echo.
 echo Seleccione el modo de ejecucion:
@@ -51,12 +63,32 @@ echo.
 
 choice /c 12 /n /m "Opcion (1-2): "
 
+if errorlevel 2 (set "MODO=red") else (set "MODO=local")
+
+:modo_elegido
+
 set "URL=http://localhost:%FRONTEND_PORT%"
 set "VITE_ARGS="
 
-if errorlevel 2 (
+if /i "%MODO%"=="red" (
     set "VITE_ARGS=--host"
     call :detectar_ip
+)
+
+rem ================================================
+rem PUERTOS
+rem ================================================
+
+node scripts\arranque.mjs puerto %BACKEND_PORT%
+if errorlevel 1 (
+    set "MENSAJE=El puerto %BACKEND_PORT% esta ocupado. Cierra el programa que lo usa o cambia BACKEND_PORT en .env"
+    goto error
+)
+
+node scripts\arranque.mjs puerto %FRONTEND_PORT%
+if errorlevel 1 (
+    set "MENSAJE=El puerto %FRONTEND_PORT% esta ocupado. Cierra el programa que lo usa o cambia FRONTEND_PORT en .env"
+    goto error
 )
 
 rem ================================================
@@ -65,18 +97,26 @@ rem ================================================
 
 echo.
 echo ================================================
-echo COMPROBANDO DEPENDENCIAS
+echo DEPENDENCIAS
 echo ================================================
 
-call :dependencias_node backend || goto error
-call :dependencias_node frontend || goto error
+call :dependencias_node backend || goto error_dependencias
+call :dependencias_node frontend || goto error_dependencias
 
-python -c "import requests, bs4" >nul 2>nul
+if not exist ".venv\Scripts\python.exe" (
+    echo CREANDO ENTORNO DE PYTHON...
+    %PY% -m venv .venv || goto error_dependencias
+)
+
+rem El backend usa este Python para descargar miniaturas
+set "PYTHON=%~dp0.venv\Scripts\python.exe"
+
+"%PYTHON%" -c "import requests, bs4" >nul 2>nul
 if errorlevel 1 (
-    echo INSTALANDO DEPENDENCIAS PYTHON...
-    python -m pip install --disable-pip-version-check -q -r scripts\requirements.txt || goto error
+    echo INSTALANDO DEPENDENCIAS DE PYTHON...
+    "%PYTHON%" -m pip install --disable-pip-version-check -q -r scripts\requirements.txt || goto error_dependencias
 ) else (
-    echo DEPENDENCIAS PYTHON OK
+    echo PYTHON OK
 )
 
 rem ================================================
@@ -88,7 +128,7 @@ echo ================================================
 echo ACTUALIZANDO MINIATURAS
 echo ================================================
 
-python scripts\scraping.py
+"%PYTHON%" scripts\scraping.py
 
 rem ================================================
 rem SERVIDORES
@@ -102,24 +142,18 @@ echo ================================================
 start "Miniaturas - Backend" /d "%~dp0backend" cmd /k npm start
 start "Miniaturas - Frontend" /d "%~dp0frontend" cmd /k npm run dev -- %VITE_ARGS%
 
-echo ESPERANDO A QUE ARRANQUEN...
+node scripts\arranque.mjs esperar "http://127.0.0.1:%BACKEND_PORT%/api/categorias" "http://localhost:%FRONTEND_PORT%"
+if errorlevel 1 (
+    set "MENSAJE=Los servidores no han arrancado. Revisa las ventanas Miniaturas - Backend y Miniaturas - Frontend"
+    goto error
+)
 
-set /a INTENTOS=0
-
-:esperar
-set /a INTENTOS+=1
-curl -s -o nul "http://127.0.0.1:%BACKEND_PORT%/api/categorias" && curl -s -o nul "http://localhost:%FRONTEND_PORT%" && goto abrir
-if %INTENTOS% geq 30 goto abrir
-timeout /t 1 /nobreak >nul
-goto esperar
-
-:abrir
 echo.
 echo ================================================
 echo LISTO: %URL%
 echo ================================================
 
-if defined VITE_ARGS (
+if /i "%MODO%"=="red" (
     echo.
     echo Abre esa direccion en cualquier dispositivo conectado a tu wifi.
 )
@@ -144,24 +178,28 @@ if defined IP (
 ) else (
     echo.
     echo [AVISO] No se pudo detectar la IP de este equipo en la red.
-    echo         Desde otros dispositivos usa la IP que muestre la ventana del frontend.
+    echo         Usa la direccion "Network" que muestre la ventana del frontend.
 )
 exit /b 0
 
 :dependencias_node
 if exist "%~1\node_modules" (
-    echo DEPENDENCIAS %~1 OK
+    echo %~1: dependencias OK
     exit /b 0
 )
-echo INSTALANDO DEPENDENCIAS %~1...
+echo %~1: instalando dependencias...
 pushd "%~1"
-call npm install
+call npm install --no-fund --no-audit
 set "RESULTADO=%errorlevel%"
 popd
 exit /b %RESULTADO%
 
+:error_dependencias
+set "MENSAJE=No se pudieron instalar las dependencias. Revisa tu conexion a internet"
+
 :error
 echo.
-echo [ERROR] No se pudieron instalar las dependencias. Revisa tu conexion a internet.
+echo [ERROR] %MENSAJE%
+echo.
 pause
 exit /b 1
