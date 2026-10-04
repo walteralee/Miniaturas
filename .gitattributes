@@ -1,0 +1,10 @@
+# Finales de línea coherentes en cualquier sistema
+* text=auto
+
+# cmd.exe necesita CRLF y bash necesita LF
+*.bat text eol=crlf
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.db binary

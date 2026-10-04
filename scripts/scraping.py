@@ -252,9 +252,7 @@ def main():
 
     if not os.path.exists(DB_FILE):
 
-        print(f"No existe la base de datos: {DB_FILE}")
-
-        print("Se creara al iniciar el backend por primera vez.")
+        print("Primera ejecucion: la base de datos se creara al iniciar el backend.")
 
         return 0
 

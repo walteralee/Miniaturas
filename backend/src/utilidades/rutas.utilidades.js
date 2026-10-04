@@ -17,11 +17,14 @@ const ALMACENAMIENTO =
 export const RUTAS = {
   raiz: RAIZ,
 
-  config: path.join(RAIZ, "config.env"),
+  config: path.join(RAIZ, ".env"),
 
   baseDatos: path.join(ALMACENAMIENTO, "datos", "miniaturas.db"),
 
   miniaturas: path.join(ALMACENAMIENTO, "miniaturas"),
+
+  // Archivos incluidos en el repositorio: imagen por defecto y contenido de ejemplo
+  recursos: path.join(RAIZ, "almacenamiento", "recursos"),
 
   scraping: path.join(RAIZ, "scripts", "scraping.py"),
 };

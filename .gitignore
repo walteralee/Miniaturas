@@ -42,9 +42,11 @@ Desktop.ini
 # ENTORNOS
 # ==================================================
 
-frontend/.env
+.env
 
-.env.production
+.env.*
+
+!.env.example
 
 # ==================================================
 # PYTHON
@@ -52,27 +54,12 @@ frontend/.env
 
 __pycache__/
 
-# ==================================================
-# BASE DE DATOS (archivos temporales de SQLite)
-# ==================================================
-
-almacenamiento/datos/*.db-journal
-
-almacenamiento/datos/*.db-wal
-
-almacenamiento/datos/*.db-shm
+.venv/
 
 # ==================================================
-# MINIATURAS DINAMICAS
+# DATOS DEL USUARIO (se generan al arrancar)
 # ==================================================
 
-almacenamiento/miniaturas/*
+almacenamiento/datos/
 
-!almacenamiento/miniaturas/1.png
-!almacenamiento/miniaturas/2.png
-!almacenamiento/miniaturas/3.png
-!almacenamiento/miniaturas/4.jpg
-!almacenamiento/miniaturas/5.jpg
-!almacenamiento/miniaturas/6.jpg
-!almacenamiento/miniaturas/7.jpg
-!almacenamiento/miniaturas/default.png
+almacenamiento/miniaturas/

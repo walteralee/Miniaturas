@@ -1,10 +1,13 @@
 import fs from "fs";
 
-import path from "path";
-
 import Database from "better-sqlite3";
 
 import { RUTAS } from "./rutas.utilidades.js";
+
+import {
+  prepararAlmacenamiento,
+  cargarDatosDemo,
+} from "./almacenamiento.utilidades.js";
 
 import { ID_SIN_CATEGORIA } from "../constantes/categorias.constantes.js";
 
@@ -44,9 +47,9 @@ export function abrirConexion() {
     return conexion;
   }
 
-  fs.mkdirSync(path.dirname(RUTAS.baseDatos), { recursive: true });
+  prepararAlmacenamiento();
 
-  fs.mkdirSync(RUTAS.miniaturas, { recursive: true });
+  const esPrimeraVez = !fs.existsSync(RUTAS.baseDatos);
 
   conexion = new Database(RUTAS.baseDatos);
 
@@ -57,5 +60,15 @@ export function abrirConexion() {
 
   crearEsquema(conexion);
 
+  if (esPrimeraVez) {
+    cargarDatosDemo(conexion);
+  }
+
   return conexion;
+}
+
+export function cerrarConexion() {
+  conexion?.close();
+
+  conexion = null;
 }

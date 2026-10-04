@@ -7,10 +7,10 @@ import react from "@vitejs/plugin-react";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-// Lee config.env (raíz del proyecto), el mismo archivo que usa el backend
+// Lee .env (raíz del proyecto), el mismo archivo que usa el backend
 function leerConfiguracion() {
   try {
-    const contenido = fs.readFileSync(path.join(RAIZ, "config.env"), "utf-8");
+    const contenido = fs.readFileSync(path.join(RAIZ, ".env"), "utf-8");
 
     return Object.fromEntries(
       contenido
