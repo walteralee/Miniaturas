@@ -126,14 +126,15 @@ Los errores devuelven el código HTTP adecuado (`400`, `404`, `500`) y un JSON c
 ```
 Miniaturas/
 ├── backend/                 API REST (Node.js + Express)
-│   └── src/
-│       ├── rutas/           Definición de endpoints
-│       ├── controladores/   Entrada y salida HTTP
-│       ├── servicios/       Lógica de negocio
-│       ├── repositorios/    Acceso a SQLite
-│       ├── validadores/     Validación de datos
-│       ├── middlewares/     Subida de imágenes y errores
-│       └── ...
+│   ├── src/
+│   │   ├── rutas/           Definición de endpoints
+│   │   ├── controladores/   Entrada y salida HTTP
+│   │   ├── servicios/       Lógica de negocio
+│   │   ├── repositorios/    Acceso a SQLite
+│   │   ├── validadores/     Validación de datos
+│   │   ├── middlewares/     Subida de imágenes y errores
+│   │   └── ...
+│   └── test/                Tests de la API (npm test)
 ├── frontend/                Interfaz web (React + Vite)
 │   └── src/
 │       ├── componentes/     Galería, ventanas y barra superior
@@ -161,6 +162,18 @@ cd frontend && npm install && npm run dev    # Interfaz (añade "-- --host" para
 ```
 
 Para descargar imágenes automáticamente, instala también las dependencias de Python: `pip install -r scripts/requirements.txt`.
+
+## Tests
+
+La API tiene 23 tests de integración escritos con el runner nativo de Node (sin dependencias extra). Cubren la creación, edición, borrado y validación de miniaturas y categorías, y los errores HTTP:
+
+```bash
+cd backend
+npm install
+npm test
+```
+
+Cada ejecución usa una carpeta de datos temporal, así que no toca tus datos y no necesita conexión a internet.
 
 ## Problemas frecuentes
 
