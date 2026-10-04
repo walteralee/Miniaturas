@@ -66,3 +66,9 @@ export function abrirConexion() {
 
   return conexion;
 }
+
+export function cerrarConexion() {
+  conexion?.close();
+
+  conexion = null;
+}
