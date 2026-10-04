@@ -23,5 +23,8 @@ export const RUTAS = {
 
   miniaturas: path.join(ALMACENAMIENTO, "miniaturas"),
 
+  // Archivos incluidos en el repositorio: imagen por defecto y contenido de ejemplo
+  recursos: path.join(RAIZ, "almacenamiento", "recursos"),
+
   scraping: path.join(RAIZ, "scripts", "scraping.py"),
 };
