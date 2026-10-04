@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useMiniaturas } from "../hooks/useMiniaturas";
 import { useCategorias } from "../hooks/useCategorias";
-import { useMenuContextual } from "../hooks/usarMenuContextual";
+import { useMenuContextual } from "../hooks/useMenuContextual";
 
 import {
   crearCategoria,
