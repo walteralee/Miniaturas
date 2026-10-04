@@ -17,7 +17,7 @@ const ALMACENAMIENTO =
 export const RUTAS = {
   raiz: RAIZ,
 
-  config: path.join(RAIZ, "config.env"),
+  config: path.join(RAIZ, ".env"),
 
   baseDatos: path.join(ALMACENAMIENTO, "datos", "miniaturas.db"),
 

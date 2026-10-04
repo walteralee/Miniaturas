@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 import { RUTAS } from "../utilidades/rutas.utilidades.js";
 
-// Toda la configuración vive en config.env (raíz del proyecto)
+// Configuración opcional en .env (raíz del proyecto); sin él se usan los valores por defecto
 dotenv.config({ path: RUTAS.config, quiet: true });
 
 export const PUERTO = Number(process.env.BACKEND_PORT) || 3000;

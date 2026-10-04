@@ -49,7 +49,7 @@ python scripts/scraping.py                           # revisar miniaturas
 
 ## Configuración
 
-Los puertos se cambian en `config.env`:
+Los puertos se cambian copiando `.env.example` a `.env`:
 
 ```env
 FRONTEND_PORT=5173

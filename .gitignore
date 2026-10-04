@@ -42,9 +42,11 @@ Desktop.ini
 # ENTORNOS
 # ==================================================
 
-frontend/.env
+.env
 
-.env.production
+.env.*
+
+!.env.example
 
 # ==================================================
 # PYTHON

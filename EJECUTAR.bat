@@ -6,13 +6,13 @@ cd /d "%~dp0"
 title Miniaturas
 
 rem ================================================
-rem CONFIGURACION (config.env)
+rem CONFIGURACION (.env opcional)
 rem ================================================
 
 set "FRONTEND_PORT=5173"
 set "BACKEND_PORT=3000"
 
-for /f "usebackq eol=# tokens=1,* delims==" %%A in ("config.env") do set "%%A=%%B"
+if exist ".env" for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do set "%%A=%%B"
 
 echo ================================================
 echo MINIATURAS
